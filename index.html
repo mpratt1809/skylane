@@ -6,111 +6,92 @@
   <title>skylane — studio hub</title>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Karla:wght@300;400;500&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Inter:wght@300;400;500&display=swap" rel="stylesheet"/>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --clay:    #c8a882;
-      --sand:    #e8ddd0;
-      --linen:   #f4ede4;
-      --parchment: #faf6f0;
-      --bark:    #5c4a36;
-      --umber:   #3d2e1e;
-      --moss:    #6b7c5c;
-      --rust:    #a05c3a;
-      --fog:     #b8a898;
-      --ink:     #2a1f14;
-      --serif:   'Cormorant Garamond', Georgia, serif;
-      --sans:    'Karla', sans-serif;
+      --bg:        #2d3d38;
+      --surface:   #243530;
+      --border:    #3a4d48;
+      --text:      #f0ece4;
+      --muted:     #5a7068;
+      --faint:     #3d5048;
+      --accent:    #a0b898;
+      --accent-dim:#6a8878;
+      --font:      'Syne', sans-serif;
+      --sans:      'Inter', sans-serif;
     }
 
     html { scroll-behavior: smooth; }
 
     body {
       font-family: var(--sans);
-      background: var(--parchment);
-      color: var(--ink);
+      background: var(--bg);
+      color: var(--text);
       min-height: 100vh;
-      position: relative;
-      overflow-x: hidden;
-    }
-
-    /* Grain texture overlay */
-    body::before {
-      content: '';
-      position: fixed;
-      inset: 0;
-      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
-      pointer-events: none;
-      z-index: 0;
-      opacity: 0.6;
     }
 
     .page {
-      max-width: 900px;
+      max-width: 860px;
       margin: 0 auto;
       padding: 3.5rem 2rem 5rem;
-      position: relative;
-      z-index: 1;
     }
 
-    /* ── Header ───────────────────────────────────────────────── */
+    /* ── Header ─────────────────────────────────────────────────── */
     .header {
-      display: grid;
-      grid-template-columns: 1fr auto;
-      align-items: end;
-      padding-bottom: 2.5rem;
-      margin-bottom: 3rem;
-      border-bottom: 1px solid var(--clay);
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      padding-bottom: 2rem;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 2.5rem;
       gap: 1rem;
+      flex-wrap: wrap;
     }
-
-    .brand { display: flex; flex-direction: column; gap: 4px; }
 
     .wordmark {
-      font-family: var(--serif);
-      font-size: 52px;
-      font-weight: 300;
-      letter-spacing: -0.02em;
-      color: var(--umber);
-      line-height: 1;
+      font-family: var(--font);
+      font-size: 56px;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 0.95;
+      text-transform: lowercase;
+      color: var(--text);
     }
 
-    .wordmark em {
-      font-style: italic;
-      color: var(--rust);
-    }
+    .wordmark span { color: var(--accent); }
 
-    .tagline {
+    .header-right { text-align: right; }
+
+    .header-date {
       font-family: var(--sans);
       font-size: 11px;
       font-weight: 300;
-      letter-spacing: 0.18em;
+      letter-spacing: 0.12em;
       text-transform: uppercase;
-      color: var(--fog);
+      color: var(--muted);
     }
 
-    .header-meta {
-      text-align: right;
-    }
-
-    .header-date {
-      font-family: var(--serif);
-      font-size: 13px;
+    .header-sub {
+      font-family: var(--sans);
+      font-size: 9px;
       font-weight: 300;
-      color: var(--fog);
-      font-style: italic;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--faint);
+      margin-top: 3px;
     }
 
-    /* ── Section label ────────────────────────────────────────── */
+    /* ── Section label ───────────────────────────────────────────── */
     .section-label {
-      font-size: 10px;
+      font-family: var(--sans);
+      font-size: 9px;
       font-weight: 500;
-      letter-spacing: 0.2em;
+      letter-spacing: 0.22em;
       text-transform: uppercase;
-      color: var(--clay);
-      margin-bottom: 1.25rem;
+      color: var(--faint);
+      margin-bottom: 1rem;
       display: flex;
       align-items: center;
       gap: 12px;
@@ -120,91 +101,73 @@
       content: '';
       flex: 1;
       height: 1px;
-      background: var(--sand);
+      background: var(--border);
     }
 
-    /* ── Widget grid ──────────────────────────────────────────── */
+    /* ── Widget grid ─────────────────────────────────────────────── */
     .widget-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-      gap: 1px;
-      background: var(--sand);
-      border: 1px solid var(--sand);
-      border-radius: 2px;
-      overflow: hidden;
-      margin-bottom: 3.5rem;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 5px;
+      margin-bottom: 3rem;
     }
 
-    /* ── Widget card ──────────────────────────────────────────── */
+    /* ── Widget card ─────────────────────────────────────────────── */
     .widget-card {
-      background: var(--parchment);
-      padding: 1.75rem 1.5rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-left: 1px solid var(--border);
+      padding: 1.5rem 1.25rem;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      min-height: 180px;
+      min-height: 170px;
       cursor: default;
-      transition: background 0.2s;
-      position: relative;
-      overflow: hidden;
+      transition: background 0.2s, border-left-color 0.2s;
       text-decoration: none;
       color: inherit;
+      position: relative;
     }
 
-    .widget-card::before {
-      content: '';
-      position: absolute;
-      top: 0; left: 0;
-      width: 3px;
-      height: 0;
-      background: var(--rust);
-      transition: height 0.3s ease;
+    .widget-card.linked {
+      cursor: pointer;
+      border-left: 3px solid var(--accent);
     }
-
-    .widget-card.linked { cursor: pointer; }
 
     .widget-card.linked:hover {
-      background: var(--linen);
-    }
-
-    .widget-card.linked:hover::before {
-      height: 100%;
+      background: #1e2e2a;
     }
 
     .widget-card.empty {
-      opacity: 0.5;
-      cursor: default;
+      opacity: 0.45;
     }
 
-    .widget-card.empty:hover { background: var(--parchment); }
-    .widget-card.empty:hover::before { height: 0; }
-
-    /* Card number */
-    .card-number {
-      font-family: var(--serif);
-      font-size: 11px;
+    .card-num {
+      font-family: var(--sans);
+      font-size: 9px;
       font-weight: 300;
-      color: var(--clay);
-      letter-spacing: 0.1em;
-      margin-bottom: 1rem;
+      letter-spacing: 0.12em;
+      color: var(--faint);
+      margin-bottom: 0.9rem;
     }
-
-    .card-body { flex: 1; }
 
     .card-title {
-      font-family: var(--serif);
-      font-size: 22px;
-      font-weight: 400;
-      color: var(--umber);
-      letter-spacing: -0.01em;
-      margin-bottom: 6px;
-      line-height: 1.2;
+      font-family: var(--font);
+      font-size: 20px;
+      font-weight: 800;
+      text-transform: lowercase;
+      letter-spacing: -0.02em;
+      color: var(--text);
+      margin-bottom: 5px;
     }
 
+    .widget-card.empty .card-title { color: var(--muted); }
+
     .card-desc {
-      font-size: 12px;
+      font-family: var(--sans);
+      font-size: 11px;
       font-weight: 300;
-      color: var(--fog);
+      color: var(--muted);
       line-height: 1.6;
       letter-spacing: 0.02em;
     }
@@ -213,259 +176,248 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-top: 1.25rem;
+      margin-top: 1.1rem;
     }
 
     .status {
-      font-size: 10px;
+      font-family: var(--sans);
+      font-size: 9px;
       font-weight: 500;
-      letter-spacing: 0.12em;
+      letter-spacing: 0.14em;
       text-transform: uppercase;
     }
 
-    .status-live  { color: var(--moss); }
-    .status-soon  { color: var(--clay); }
+    .status-live { color: var(--accent); }
+    .status-soon { color: var(--faint); }
 
     .card-arrow {
-      font-size: 18px;
-      color: var(--clay);
-      transition: transform 0.2s, color 0.2s;
-      font-family: var(--serif);
-      font-style: italic;
+      font-size: 14px;
+      color: var(--accent);
+      transition: transform 0.2s;
+      font-family: var(--sans);
+      opacity: 0;
     }
 
-    .widget-card.linked:hover .card-arrow {
-      transform: translateX(5px);
-      color: var(--rust);
-    }
+    .widget-card.linked .card-arrow { opacity: 1; }
+    .widget-card.linked:hover .card-arrow { transform: translateX(4px); }
 
-    /* ── Decorative accent block ──────────────────────────────── */
-    .accent-strip {
+    /* ── Info strip ──────────────────────────────────────────────── */
+    .info-strip {
       display: grid;
-      grid-template-columns: 1fr 1fr 1fr;
-      gap: 1px;
-      background: var(--sand);
-      margin-bottom: 3rem;
-      border-radius: 2px;
-      overflow: hidden;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 5px;
+      margin-bottom: 2.5rem;
     }
 
-    .accent-block {
-      background: var(--parchment);
-      padding: 1.5rem;
+    .info-block {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 1rem 1.25rem;
     }
 
-    .accent-block-label {
-      font-size: 10px;
-      font-weight: 500;
-      letter-spacing: 0.18em;
+    .info-label {
+      font-family: var(--sans);
+      font-size: 9px;
+      font-weight: 300;
+      letter-spacing: 0.2em;
       text-transform: uppercase;
-      color: var(--fog);
-      margin-bottom: 6px;
+      color: var(--faint);
+      margin-bottom: 5px;
     }
 
-    .accent-block-value {
-      font-family: var(--serif);
-      font-size: 28px;
-      font-weight: 300;
-      color: var(--umber);
+    .info-value {
+      font-family: var(--font);
+      font-size: 15px;
+      font-weight: 700;
+      text-transform: lowercase;
+      letter-spacing: -0.01em;
+      color: var(--text);
     }
 
-    .accent-block-sub {
-      font-size: 11px;
+    .info-sub {
+      font-family: var(--sans);
+      font-size: 10px;
       font-weight: 300;
-      color: var(--clay);
+      color: var(--muted);
       margin-top: 2px;
     }
 
-    /* ── Footer ───────────────────────────────────────────────── */
+    /* ── Footer ──────────────────────────────────────────────────── */
     .hub-footer {
-      border-top: 1px solid var(--sand);
-      padding-top: 1.5rem;
+      border-top: 1px solid var(--border);
+      padding-top: 1.25rem;
       display: flex;
       align-items: center;
       justify-content: space-between;
       flex-wrap: wrap;
-      gap: 1rem;
+      gap: 0.75rem;
     }
 
-    .footer-left {
-      font-family: var(--serif);
+    .footer-l {
+      font-family: var(--font);
       font-size: 13px;
+      font-weight: 700;
+      text-transform: lowercase;
+      letter-spacing: -0.01em;
+      color: var(--faint);
+    }
+
+    .footer-l span { color: var(--accent); }
+
+    .footer-r {
+      font-family: var(--sans);
+      font-size: 9px;
       font-weight: 300;
-      font-style: italic;
-      color: var(--fog);
-    }
-
-    .footer-right {
-      font-size: 10px;
-      font-weight: 400;
-      letter-spacing: 0.15em;
+      letter-spacing: 0.18em;
       text-transform: uppercase;
-      color: var(--clay);
+      color: var(--faint);
     }
 
-    /* ── Animations ───────────────────────────────────────────── */
+    /* ── Animations ──────────────────────────────────────────────── */
     @keyframes riseIn {
-      from { opacity: 0; transform: translateY(16px); }
+      from { opacity: 0; transform: translateY(12px); }
       to   { opacity: 1; transform: translateY(0); }
     }
 
-    .header  { animation: riseIn 0.6s ease both; }
-    .section-label { animation: riseIn 0.6s ease 0.1s both; }
-    .widget-grid { animation: riseIn 0.6s ease 0.15s both; }
-    .accent-strip { animation: riseIn 0.6s ease 0.2s both; }
-    .hub-footer { animation: riseIn 0.6s ease 0.25s both; }
+    .header       { animation: riseIn 0.5s ease both; }
+    .info-strip   { animation: riseIn 0.5s ease 0.08s both; }
+    .section-label{ animation: riseIn 0.5s ease 0.12s both; }
+    .widget-grid  { animation: riseIn 0.5s ease 0.16s both; }
+    .hub-footer   { animation: riseIn 0.5s ease 0.2s both; }
 
-    /* ── Mobile ───────────────────────────────────────────────── */
-    @media (max-width: 580px) {
+    /* ── Mobile ──────────────────────────────────────────────────── */
+    @media (max-width: 560px) {
       .page { padding: 2rem 1.25rem 4rem; }
-      .wordmark { font-size: 38px; }
-      .header { grid-template-columns: 1fr; }
-      .header-meta { text-align: left; }
-      .accent-strip { grid-template-columns: 1fr; }
-      .widget-grid { grid-template-columns: 1fr; }
+      .wordmark { font-size: 42px; }
+      .header { flex-direction: column; align-items: flex-start; }
+      .header-right { text-align: left; }
+      .info-strip { grid-template-columns: 1fr; }
+      .widget-grid { grid-template-columns: 1fr 1fr; }
     }
   </style>
 </head>
 <body>
 <div class="page">
 
-  <!-- Header -->
   <header class="header">
-    <div class="brand">
-      <div class="wordmark">sky<em>lane</em></div>
-      <div class="tagline">Creative studio &amp; business hub</div>
-    </div>
-    <div class="header-meta">
+    <div class="wordmark">sky<span>lane</span></div>
+    <div class="header-right">
       <div class="header-date" id="today-date"></div>
+      <div class="header-sub">creative studio hub</div>
     </div>
   </header>
 
-  <!-- Quick stats -->
-  <div class="accent-strip" id="accent-strip">
-    <div class="accent-block">
-      <div class="accent-block-label">Widgets live</div>
-      <div class="accent-block-value" id="stat-live">1</div>
-      <div class="accent-block-sub">of 5 built</div>
+  <div class="info-strip">
+    <div class="info-block">
+      <div class="info-label">studio</div>
+      <div class="info-value">sky & meagan</div>
+      <div class="info-sub">byskylane.com</div>
     </div>
-    <div class="accent-block">
-      <div class="accent-block-label">Studio</div>
-      <div class="accent-block-value">Sky &amp; Meagan</div>
-      <div class="accent-block-sub">byskylane.com</div>
+    <div class="info-block">
+      <div class="info-label">discipline</div>
+      <div class="info-value">mixed creative</div>
+      <div class="info-sub">art & design</div>
     </div>
-    <div class="accent-block">
-      <div class="accent-block-label">Version</div>
-      <div class="accent-block-value">1.1</div>
-      <div class="accent-block-sub">last updated today</div>
+    <div class="info-block">
+      <div class="info-label">widgets live</div>
+      <div class="info-value" id="live-count">1 of 5</div>
+      <div class="info-sub">more coming soon</div>
     </div>
   </div>
 
-  <!-- Widgets -->
-  <div class="section-label">Tools &amp; widgets</div>
+  <div class="section-label">tools & widgets</div>
 
   <div class="widget-grid">
 
-    <!-- Expenses — LIVE -->
     <div class="widget-card linked" id="card-expenses" onclick="window.open('expenses.html','_self')">
-      <div class="card-number">01</div>
-      <div class="card-body">
-        <div class="card-title">Expenses</div>
-        <div class="card-desc">Receipt scanning, tax tracking &amp; year-end reports</div>
+      <div>
+        <div class="card-num">01</div>
+        <div class="card-title">expenses</div>
+        <div class="card-desc">receipt scanning, tax tracking & year-end reports</div>
       </div>
       <div class="card-footer">
-        <span class="status status-live">● Live</span>
+        <span class="status status-live">● live</span>
         <span class="card-arrow">→</span>
       </div>
     </div>
 
-    <!-- Tasks -->
     <div class="widget-card empty" id="card-tasks">
-      <div class="card-number">02</div>
-      <div class="card-body">
-        <div class="card-title">Tasks</div>
-        <div class="card-desc">Project tracking &amp; studio to-dos</div>
+      <div>
+        <div class="card-num">02</div>
+        <div class="card-title">tasks</div>
+        <div class="card-desc">project tracking & studio to-dos</div>
       </div>
       <div class="card-footer">
-        <span class="status status-soon">Coming soon</span>
+        <span class="status status-soon">coming soon</span>
       </div>
     </div>
 
-    <!-- Finance -->
     <div class="widget-card empty" id="card-finance">
-      <div class="card-number">03</div>
-      <div class="card-body">
-        <div class="card-title">Finance</div>
-        <div class="card-desc">Invoicing, budgets &amp; cash flow</div>
+      <div>
+        <div class="card-num">03</div>
+        <div class="card-title">finance</div>
+        <div class="card-desc">invoicing, budgets & cash flow</div>
       </div>
       <div class="card-footer">
-        <span class="status status-soon">Coming soon</span>
+        <span class="status status-soon">coming soon</span>
       </div>
     </div>
 
-    <!-- CRM -->
     <div class="widget-card empty" id="card-crm">
-      <div class="card-number">04</div>
-      <div class="card-body">
-        <div class="card-title">Clients</div>
-        <div class="card-desc">Contacts, leads &amp; relationships</div>
+      <div>
+        <div class="card-num">04</div>
+        <div class="card-title">clients</div>
+        <div class="card-desc">contacts, leads & relationships</div>
       </div>
       <div class="card-footer">
-        <span class="status status-soon">Coming soon</span>
+        <span class="status status-soon">coming soon</span>
       </div>
     </div>
 
-    <!-- Analytics -->
     <div class="widget-card empty" id="card-analytics">
-      <div class="card-number">05</div>
-      <div class="card-body">
-        <div class="card-title">Analytics</div>
-        <div class="card-desc">Studio performance &amp; insights</div>
+      <div>
+        <div class="card-num">05</div>
+        <div class="card-title">analytics</div>
+        <div class="card-desc">studio performance & insights</div>
       </div>
       <div class="card-footer">
-        <span class="status status-soon">Coming soon</span>
+        <span class="status status-soon">coming soon</span>
       </div>
     </div>
 
   </div>
 
-  <!-- Footer -->
   <footer class="hub-footer">
-    <div class="footer-left">skylane creative studio</div>
-    <div class="footer-right">byskylane.com</div>
+    <div class="footer-l">sky<span>lane</span></div>
+    <div class="footer-r">v1.1 &nbsp;·&nbsp; byskylane.com</div>
   </footer>
 
 </div>
 
 <script>
-  // Date
   const d = new Date();
   document.getElementById('today-date').textContent = d.toLocaleDateString('en-US', {
-    weekday: 'long', month: 'long', day: 'numeric', year: 'numeric'
+    weekday:'long', month:'long', day:'numeric', year:'numeric'
   });
 
-  // Helper to activate a card when a widget goes live
-  // Usage: activateCard('tasks', 'tasks.html')
   function activateCard(id, url) {
     const card = document.getElementById('card-' + id);
     if (!card) return;
     card.classList.remove('empty');
     card.classList.add('linked');
-    const status = card.querySelector('.status');
-    if (status) { status.textContent = '● Live'; status.className = 'status status-live'; }
-    const footer = card.querySelector('.card-footer');
-    if (footer && !footer.querySelector('.card-arrow')) {
-      const arrow = document.createElement('span');
-      arrow.className = 'card-arrow'; arrow.textContent = '→';
-      footer.appendChild(arrow);
+    const s = card.querySelector('.status');
+    if (s) { s.textContent = '● live'; s.className = 'status status-live'; }
+    const f = card.querySelector('.card-footer');
+    if (f && !f.querySelector('.card-arrow')) {
+      const a = document.createElement('span');
+      a.className = 'card-arrow'; a.textContent = '→'; f.appendChild(a);
     }
     card.addEventListener('click', () => window.open(url, '_self'));
-    // Update live count
-    const liveCount = document.querySelectorAll('.widget-card.linked').length;
-    document.getElementById('stat-live').textContent = liveCount;
+    const live = document.querySelectorAll('.widget-card.linked').length;
+    document.getElementById('live-count').textContent = live + ' of 5';
   }
 
-  // ── Activate widgets as they go live ─────────────────────────
+  // ── activate as widgets go live ───────────────────────────────
   // activateCard('tasks',     'tasks.html');
   // activateCard('finance',   'finance.html');
   // activateCard('crm',       'crm.html');
