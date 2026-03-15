@@ -8,6 +8,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   :root {
@@ -23,7 +24,9 @@
     --font: 'DM Sans', sans-serif; --mono: 'DM Mono', monospace;
   }
   body { font-family: var(--font); background: var(--bg); color: var(--text); min-height: 100vh; }
-  .page { max-width: 960px; margin: 0 auto; padding: 2rem 1.25rem 4rem; }
+  .page { max-width: 980px; margin: 0 auto; padding: 2rem 1.25rem 4rem; }
+
+  /* Header */
   .header { display: flex; align-items: center; justify-content: space-between; padding-bottom: 1.25rem; border-bottom: 1px solid var(--border); margin-bottom: 1.75rem; flex-wrap: wrap; gap: 1rem; }
   .logo-area { display: flex; align-items: center; gap: 10px; }
   .logo-mark { width: 34px; height: 34px; background: var(--accent); border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
@@ -36,32 +39,57 @@
   .btn-primary { background: var(--accent); color: #fff; border-color: var(--accent); }
   .btn-primary:hover { background: #2a2a4e; }
   .btn-sm { padding: 5px 10px; font-size: 12px; }
+  .btn-green { background: var(--green-bg); color: var(--green); border-color: transparent; }
+  .btn-green:hover { background: #d4ebbf; }
   .sync-label { font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 5px; }
   .sync-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
   .sync-dot.live { background: var(--green); }
   .sync-dot.offline { background: var(--red); }
   .sync-dot.loading { background: var(--amber); animation: pulse 1s ease-in-out infinite; }
+
+  /* Nav tabs */
+  .nav-tabs { display: flex; gap: 4px; margin-bottom: 1.75rem; border-bottom: 1px solid var(--border); }
+  .nav-tab { font-family: var(--font); font-size: 13px; font-weight: 500; padding: 8px 16px; border: none; background: none; color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; transition: color 0.15s, border-color 0.15s; }
+  .nav-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+  .nav-tab:hover { color: var(--text); }
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  /* Summary cards */
   .summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 1.75rem; }
   .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1rem; }
   .stat-label { font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.07em; color: var(--faint); margin-bottom: 6px; }
   .stat-value { font-size: 22px; font-weight: 500; font-family: var(--mono); }
   .stat-sub { font-size: 12px; color: var(--muted); margin-top: 3px; }
+
+  /* Upload */
   .upload-section { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.5rem; margin-bottom: 1.75rem; }
+  .upload-tabs { display: flex; gap: 8px; margin-bottom: 1.25rem; }
+  .upload-tab { font-family: var(--font); font-size: 12px; font-weight: 500; padding: 5px 12px; border-radius: 99px; border: 1px solid var(--border); background: var(--surface); color: var(--muted); cursor: pointer; transition: all 0.15s; }
+  .upload-tab.active { background: var(--accent); color: #fff; border-color: var(--accent); }
   .upload-zone { border: 1.5px dashed var(--border-hover); border-radius: var(--radius); padding: 2.5rem 1rem; text-align: center; cursor: pointer; transition: border-color 0.15s, background 0.15s; }
   .upload-zone:hover, .upload-zone.dragover { border-color: var(--accent); background: var(--accent-light); }
   .upload-icon { width: 40px; height: 40px; margin: 0 auto 12px; opacity: 0.35; }
   .upload-title { font-size: 15px; font-weight: 500; margin-bottom: 5px; }
   .upload-hint { font-size: 13px; color: var(--muted); }
   #file-input { display: none; }
+  .manual-form { display: none; }
+  .manual-form.active { display: block; }
+
+  /* Panels */
   .panel { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.5rem; margin-bottom: 1.75rem; display: none; }
   .panel.active { display: block; animation: fadeUp 0.3s ease both; }
-  .panel-title { font-size: 16px; font-weight: 500; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 8px; }
+  .panel-title { font-size: 16px; font-weight: 500; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
   .badge { font-size: 11px; padding: 2px 8px; border-radius: 99px; font-weight: 500; }
   .badge-amber { background: var(--amber-bg); color: var(--amber); }
   .badge-green { background: var(--green-bg); color: var(--green); }
-  .review-layout { display: grid; grid-template-columns: 200px 1fr; gap: 1.5rem; }
+  .badge-blue { background: var(--blue-bg); color: var(--blue); }
+  .badge-recurring { background: #eeedfe; color: #534ab7; }
+
+  /* Review form */
+  .review-layout { display: grid; grid-template-columns: 190px 1fr; gap: 1.5rem; }
   @media (max-width: 600px) { .review-layout { grid-template-columns: 1fr; } }
-  .receipt-thumb { width: 100%; border-radius: var(--radius-sm); border: 1px solid var(--border); object-fit: contain; max-height: 280px; background: var(--bg); }
+  .receipt-thumb { width: 100%; border-radius: var(--radius-sm); border: 1px solid var(--border); object-fit: contain; max-height: 260px; background: var(--bg); }
   .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
   @media (max-width: 500px) { .form-grid { grid-template-columns: 1fr; } }
   .field { display: flex; flex-direction: column; gap: 4px; }
@@ -70,6 +98,12 @@
   .field input, .field select, .field textarea { font-family: var(--font); font-size: 13px; color: var(--text); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 8px 10px; background: var(--surface); transition: border-color 0.15s; }
   .field input:focus, .field select:focus, .field textarea:focus { outline: none; border-color: var(--accent); }
   .field textarea { resize: vertical; min-height: 60px; }
+  .checkbox-row { display: flex; align-items: center; gap: 8px; padding: 10px; background: #eeedfe; border-radius: var(--radius-sm); border: 1px solid #c8c4f0; }
+  .checkbox-row input[type=checkbox] { width: 15px; height: 15px; accent-color: #534ab7; cursor: pointer; }
+  .checkbox-row label { font-size: 13px; color: #534ab7; font-weight: 500; cursor: pointer; }
+  .checkbox-row span { font-size: 12px; color: #7f77dd; margin-left: 2px; }
+
+  /* Line items */
   .line-items-section { margin-top: 1.25rem; }
   .line-items-title { font-size: 13px; font-weight: 500; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between; }
   .line-items-hint { font-size: 12px; color: var(--muted); font-weight: 400; }
@@ -80,6 +114,8 @@
   .remove-btn { background: none; border: none; cursor: pointer; color: var(--faint); font-size: 16px; padding: 0 2px; line-height: 1; transition: color 0.15s; }
   .remove-btn:hover { color: var(--red); }
   .remove-btn.undo { color: var(--amber); font-size: 12px; }
+
+  /* Scanning */
   .scanning { text-align: center; padding: 2rem; }
   .scan-dots { display: inline-flex; gap: 6px; margin-bottom: 12px; }
   .scan-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); opacity: 0.3; animation: pulse 1.2s ease-in-out infinite; }
@@ -89,7 +125,22 @@
   .scan-label { font-size: 14px; color: var(--muted); }
   .clarify-box { background: var(--amber-bg); border: 1px solid #f0c070; border-radius: var(--radius-sm); padding: 12px 14px; margin-bottom: 1rem; font-size: 13px; color: var(--amber); display: none; }
   .clarify-box.active { display: block; }
-  .table-section { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.5rem; animation: fadeUp 0.3s ease both; }
+
+  /* Charts section */
+  .charts-section { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.5rem; margin-bottom: 1.75rem; }
+  .charts-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 10px; }
+  .charts-title { font-size: 16px; font-weight: 500; }
+  .period-tabs { display: flex; gap: 4px; }
+  .period-tab { font-family: var(--font); font-size: 12px; font-weight: 500; padding: 4px 12px; border-radius: 99px; border: 1px solid var(--border); background: var(--surface); color: var(--muted); cursor: pointer; transition: all 0.15s; }
+  .period-tab.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+  @media (max-width: 640px) { .charts-grid { grid-template-columns: 1fr; } }
+  .chart-card { background: var(--bg); border-radius: var(--radius-sm); padding: 1rem; }
+  .chart-card-title { font-size: 12px; font-weight: 500; color: var(--muted); text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 0.75rem; }
+  .chart-wrap { position: relative; height: 220px; }
+
+  /* Table */
+  .table-section { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.5rem; }
   .table-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 10px; }
   .table-title { font-size: 16px; font-weight: 500; }
   .filter-row { display: flex; gap: 8px; flex-wrap: wrap; }
@@ -107,8 +158,10 @@
   .thumb-tiny { width: 32px; height: 32px; object-fit: cover; border-radius: 4px; border: 1px solid var(--border); cursor: pointer; }
   .export-bar { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin-top: 1.25rem; padding-top: 1.25rem; border-top: 1px solid var(--border); }
   .export-label { font-size: 13px; color: var(--muted); }
-  .export-actions { display: flex; gap: 8px; }
+  .export-actions { display: flex; gap: 8px; flex-wrap: wrap; }
   .year-select { font-family: var(--mono); font-size: 13px; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 5px 10px; background: var(--surface); color: var(--text); cursor: pointer; }
+
+  /* Toast & Lightbox */
   .toast { position: fixed; bottom: 24px; right: 24px; background: var(--accent); color: #fff; font-size: 13px; padding: 10px 16px; border-radius: var(--radius-sm); opacity: 0; transform: translateY(8px); transition: all 0.25s; pointer-events: none; z-index: 999; }
   .toast.show { opacity: 1; transform: translateY(0); }
   .lightbox { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.75); z-index: 1000; align-items: center; justify-content: center; padding: 1rem; }
@@ -121,6 +174,7 @@
 <body>
 <div class="page">
 
+  <!-- Header -->
   <div class="header">
     <div class="logo-area">
       <div class="logo-mark">
@@ -130,88 +184,182 @@
     </div>
     <div class="header-actions">
       <div class="sync-label"><span class="sync-dot loading" id="sync-dot"></span><span id="sync-label">Connecting…</span></div>
-      <select class="year-select" id="year-filter" onchange="renderTable();updateStats();"></select>
+      <select class="year-select" id="year-filter" onchange="renderTable();updateStats();renderCharts();"></select>
       <button class="btn" onclick="exportCSV()">Export CSV</button>
-      <button class="btn btn-primary" onclick="exportPDF()">Export PDF</button>
+      <button class="btn" onclick="exportPDF()">Export PDF</button>
+      <button class="btn btn-green" onclick="exportTaxSummary()">Tax Summary</button>
     </div>
   </div>
 
+  <!-- Summary stats -->
   <div class="summary-grid">
     <div class="stat-card"><div class="stat-label">Total expenses</div><div class="stat-value" id="stat-total">$0.00</div><div class="stat-sub" id="stat-year">—</div></div>
     <div class="stat-card"><div class="stat-label">Receipts logged</div><div class="stat-value" id="stat-count">0</div><div class="stat-sub">this year</div></div>
-    <div class="stat-card"><div class="stat-label">Top category</div><div class="stat-value" id="stat-top" style="font-size:14px;margin-top:4px;">—</div><div class="stat-sub" id="stat-top-amt"></div></div>
-    <div class="stat-card"><div class="stat-label">Tax deductible</div><div class="stat-value" id="stat-deductible">$0.00</div><div class="stat-sub">estimated total</div></div>
+    <div class="stat-card"><div class="stat-label">Recurring / month</div><div class="stat-value" id="stat-recurring">$0.00</div><div class="stat-sub">flagged subscriptions</div></div>
+    <div class="stat-card"><div class="stat-label">Top category</div><div class="stat-value" id="stat-top" style="font-size:13px;margin-top:4px;">—</div><div class="stat-sub" id="stat-top-amt"></div></div>
   </div>
 
-  <div class="upload-section">
-    <div class="upload-zone" id="upload-zone" onclick="document.getElementById('file-input').click()" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event)">
-      <div class="upload-icon">
-        <svg viewBox="0 0 40 40" fill="none"><rect x="6" y="4" width="28" height="34" rx="4" stroke="#1a1a2e" stroke-width="2"/><path d="M13 14h14M13 20h10M13 26h8" stroke="#1a1a2e" stroke-width="1.5" stroke-linecap="round"/><circle cx="30" cy="30" r="8" fill="#f9f8f6" stroke="#1a1a2e" stroke-width="1.5"/><path d="M30 26v8M26 30h8" stroke="#1a1a2e" stroke-width="1.5" stroke-linecap="round"/></svg>
+  <!-- Nav tabs -->
+  <div class="nav-tabs">
+    <button class="nav-tab active" onclick="switchTab('log',this)">Expense log</button>
+    <button class="nav-tab" onclick="switchTab('charts',this)">Charts & reports</button>
+    <button class="nav-tab" onclick="switchTab('add',this)">Add expense</button>
+  </div>
+
+  <!-- TAB: Add expense -->
+  <div class="tab-content" id="tab-add">
+
+    <div class="upload-section">
+      <div class="upload-tabs">
+        <button class="upload-tab active" onclick="switchUploadMode('receipt',this)">Scan a receipt</button>
+        <button class="upload-tab" onclick="switchUploadMode('manual',this)">Enter manually</button>
       </div>
-      <div class="upload-title">Upload a receipt</div>
-      <div class="upload-hint">Click to browse or drag and drop — JPG, PNG, PDF</div>
-    </div>
-    <input type="file" id="file-input" accept="image/*,application/pdf" onchange="handleFile(event)"/>
-  </div>
 
-  <div class="panel" id="scanning-panel">
-    <div class="scanning"><div class="scan-dots"><div class="scan-dot"></div><div class="scan-dot"></div><div class="scan-dot"></div></div><div class="scan-label" id="scan-label">Scanning receipt with AI…</div></div>
-  </div>
+      <!-- Receipt upload -->
+      <div id="upload-receipt-zone">
+        <div class="upload-zone" id="upload-zone" onclick="document.getElementById('file-input').click()" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event)">
+          <div class="upload-icon">
+            <svg viewBox="0 0 40 40" fill="none"><rect x="6" y="4" width="28" height="34" rx="4" stroke="#1a1a2e" stroke-width="2"/><path d="M13 14h14M13 20h10M13 26h8" stroke="#1a1a2e" stroke-width="1.5" stroke-linecap="round"/><circle cx="30" cy="30" r="8" fill="#f9f8f6" stroke="#1a1a2e" stroke-width="1.5"/><path d="M30 26v8M26 30h8" stroke="#1a1a2e" stroke-width="1.5" stroke-linecap="round"/></svg>
+          </div>
+          <div class="upload-title">Upload a receipt</div>
+          <div class="upload-hint">Click to browse or drag and drop — JPG, PNG, PDF</div>
+        </div>
+        <input type="file" id="file-input" accept="image/*,application/pdf" onchange="handleFile(event)"/>
+      </div>
 
-  <div class="panel" id="review-panel">
-    <div class="panel-title">Review extracted data <span class="badge badge-amber" id="confidence-badge">Review needed</span></div>
-    <div class="clarify-box" id="clarify-box"></div>
-    <div class="review-layout">
-      <div><img id="receipt-thumb" class="receipt-thumb" src="" alt="Receipt"/></div>
-      <div>
-        <div class="form-grid">
-          <div class="field"><label>Vendor / store</label><input type="text" id="f-vendor" placeholder="e.g. Staples"/></div>
-          <div class="field"><label>Date of purchase</label><input type="date" id="f-date"/></div>
-          <div class="field"><label>Total amount</label><input type="number" id="f-total" step="0.01" placeholder="0.00"/></div>
-          <div class="field"><label>Tax amount</label><input type="number" id="f-tax" step="0.01" placeholder="0.00"/></div>
+      <!-- Manual entry form -->
+      <div class="manual-form" id="manual-form">
+        <div class="form-grid" style="margin-bottom:12px;">
+          <div class="field"><label>Vendor / store</label><input type="text" id="m-vendor" placeholder="e.g. Staples"/></div>
+          <div class="field"><label>Date of purchase</label><input type="date" id="m-date"/></div>
+          <div class="field"><label>Total amount</label><input type="number" id="m-total" step="0.01" placeholder="0.00"/></div>
+          <div class="field"><label>Tax amount</label><input type="number" id="m-tax" step="0.01" placeholder="0.00"/></div>
           <div class="field"><label>Payment method</label>
-            <select id="f-payment"><option value="">— select —</option><option>Credit card</option><option>Debit card</option><option>Cash</option><option>Bank transfer</option><option>Other</option></select>
+            <select id="m-payment"><option value="">— select —</option><option>Credit card</option><option>Debit card</option><option>Cash</option><option>Bank transfer</option><option>Other</option></select>
           </div>
           <div class="field"><label>Spender</label>
-            <select id="f-spender"><option value="">— select —</option><option>Partner 1</option><option>Partner 2</option></select>
+            <select id="m-spender"><option value="">— select —</option><option>Partner 1</option><option>Partner 2</option></select>
           </div>
           <div class="field"><label>Category</label>
-            <select id="f-category"><option value="">— select —</option><option>Equipment &amp; hardware</option><option>Software &amp; subscriptions</option><option>Office supplies</option><option>Travel &amp; transport</option><option>Meals &amp; entertainment</option><option>Professional services</option><option>Other</option></select>
+            <select id="m-category"><option value="">— select —</option><option>Equipment &amp; hardware</option><option>Software &amp; subscriptions</option><option>Office supplies</option><option>Travel &amp; transport</option><option>Meals &amp; entertainment</option><option>Professional services</option><option>Other</option></select>
           </div>
-          <div class="field full"><label>Business purpose / notes</label><textarea id="f-notes" placeholder="e.g. Printer ink for client proposals"></textarea></div>
+          <div class="field full"><label>Business purpose / notes</label><textarea id="m-notes" placeholder="e.g. Printer ink for client proposals"></textarea></div>
+          <div class="field full">
+            <div class="checkbox-row">
+              <input type="checkbox" id="m-recurring"/>
+              <label for="m-recurring">Recurring expense</label>
+              <span>— mark if this repeats monthly (subscriptions, rent, etc.)</span>
+            </div>
+          </div>
         </div>
-        <div class="line-items-section">
-          <div class="line-items-title">Line items <span class="line-items-hint">Remove any personal / non-business items</span></div>
-          <div id="line-items-list"></div>
+        <button class="btn btn-primary" onclick="saveManualExpense()">Save expense</button>
+      </div>
+    </div>
+
+    <!-- Scanning panel -->
+    <div class="panel" id="scanning-panel">
+      <div class="scanning"><div class="scan-dots"><div class="scan-dot"></div><div class="scan-dot"></div><div class="scan-dot"></div></div><div class="scan-label" id="scan-label">Scanning receipt with AI…</div></div>
+    </div>
+
+    <!-- Review panel -->
+    <div class="panel" id="review-panel">
+      <div class="panel-title">Review extracted data <span class="badge badge-amber" id="confidence-badge">Review needed</span></div>
+      <div class="clarify-box" id="clarify-box"></div>
+      <div class="review-layout">
+        <div><img id="receipt-thumb" class="receipt-thumb" src="" alt="Receipt"/></div>
+        <div>
+          <div class="form-grid">
+            <div class="field"><label>Vendor / store</label><input type="text" id="f-vendor" placeholder="e.g. Staples"/></div>
+            <div class="field"><label>Date of purchase</label><input type="date" id="f-date"/></div>
+            <div class="field"><label>Total amount</label><input type="number" id="f-total" step="0.01" placeholder="0.00"/></div>
+            <div class="field"><label>Tax amount</label><input type="number" id="f-tax" step="0.01" placeholder="0.00"/></div>
+            <div class="field"><label>Payment method</label>
+              <select id="f-payment"><option value="">— select —</option><option>Credit card</option><option>Debit card</option><option>Cash</option><option>Bank transfer</option><option>Other</option></select>
+            </div>
+            <div class="field"><label>Spender</label>
+              <select id="f-spender"><option value="">— select —</option><option>Partner 1</option><option>Partner 2</option></select>
+            </div>
+            <div class="field"><label>Category</label>
+              <select id="f-category"><option value="">— select —</option><option>Equipment &amp; hardware</option><option>Software &amp; subscriptions</option><option>Office supplies</option><option>Travel &amp; transport</option><option>Meals &amp; entertainment</option><option>Professional services</option><option>Other</option></select>
+            </div>
+            <div class="field full"><label>Business purpose / notes</label><textarea id="f-notes" placeholder="e.g. Printer ink for client proposals"></textarea></div>
+            <div class="field full">
+              <div class="checkbox-row">
+                <input type="checkbox" id="f-recurring"/>
+                <label for="f-recurring">Recurring expense</label>
+                <span>— mark if this repeats monthly</span>
+              </div>
+            </div>
+          </div>
+          <div class="line-items-section">
+            <div class="line-items-title">Line items <span class="line-items-hint">Remove any personal / non-business items</span></div>
+            <div id="line-items-list"></div>
+          </div>
+          <div style="display:flex;gap:10px;margin-top:1.25rem;flex-wrap:wrap;">
+            <button class="btn btn-primary" id="save-btn" onclick="confirmSave()">Confirm &amp; save</button>
+            <button class="btn" onclick="cancelReview()">Discard</button>
+          </div>
         </div>
-        <div style="display:flex;gap:10px;margin-top:1.25rem;flex-wrap:wrap;">
-          <button class="btn btn-primary" id="save-btn" onclick="confirmSave()">Confirm &amp; save</button>
-          <button class="btn" onclick="cancelReview()">Discard</button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- TAB: Expense log -->
+  <div class="tab-content active" id="tab-log">
+    <div class="table-section">
+      <div class="table-header">
+        <div class="table-title">Logged expenses</div>
+        <div class="filter-row">
+          <button class="filter-btn active" onclick="setFilter('all',this)">All</button>
+          <button class="filter-btn" onclick="setFilter('recurring',this)">Recurring</button>
+          <button class="filter-btn" onclick="setFilter('Equipment & hardware',this)">Equipment</button>
+          <button class="filter-btn" onclick="setFilter('Software & subscriptions',this)">Software</button>
+          <button class="filter-btn" onclick="setFilter('Office supplies',this)">Office</button>
+          <button class="filter-btn" onclick="setFilter('Travel & transport',this)">Travel</button>
+          <button class="filter-btn" onclick="setFilter('Meals & entertainment',this)">Meals</button>
+          <button class="filter-btn" onclick="setFilter('Other',this)">Other</button>
+        </div>
+      </div>
+      <div id="table-wrap"><div class="empty-state">Connecting to database…</div></div>
+      <div class="export-bar">
+        <div class="export-label" id="export-label">Ready to export when you have expenses logged.</div>
+        <div class="export-actions">
+          <button class="btn btn-sm" onclick="exportCSV()">Download CSV</button>
+          <button class="btn btn-sm" onclick="exportPDF()">Download PDF</button>
+          <button class="btn btn-sm btn-green" onclick="exportTaxSummary()">Tax Summary PDF</button>
         </div>
       </div>
     </div>
   </div>
 
-  <div class="table-section">
-    <div class="table-header">
-      <div class="table-title">Logged expenses</div>
-      <div class="filter-row">
-        <button class="filter-btn active" onclick="setFilter('all',this)">All</button>
-        <button class="filter-btn" onclick="setFilter('Equipment & hardware',this)">Equipment</button>
-        <button class="filter-btn" onclick="setFilter('Software & subscriptions',this)">Software</button>
-        <button class="filter-btn" onclick="setFilter('Office supplies',this)">Office</button>
-        <button class="filter-btn" onclick="setFilter('Travel & transport',this)">Travel</button>
-        <button class="filter-btn" onclick="setFilter('Meals & entertainment',this)">Meals</button>
-        <button class="filter-btn" onclick="setFilter('Other',this)">Other</button>
+  <!-- TAB: Charts -->
+  <div class="tab-content" id="tab-charts">
+    <div class="charts-section">
+      <div class="charts-header">
+        <div class="charts-title">Spending overview</div>
+        <div class="period-tabs">
+          <button class="period-tab active" onclick="setPeriod('monthly',this)">Monthly</button>
+          <button class="period-tab" onclick="setPeriod('quarterly',this)">Quarterly</button>
+          <button class="period-tab" onclick="setPeriod('ytd',this)">Year to date</button>
+        </div>
+      </div>
+      <div class="charts-grid">
+        <div class="chart-card">
+          <div class="chart-card-title" id="bar-chart-title">Spending by month</div>
+          <div class="chart-wrap"><canvas id="bar-chart"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-card-title">Breakdown by category</div>
+          <div class="chart-wrap"><canvas id="donut-chart"></canvas></div>
+        </div>
       </div>
     </div>
-    <div id="table-wrap"><div class="empty-state">Connecting to database…</div></div>
-    <div class="export-bar">
-      <div class="export-label" id="export-label">Ready to export when you have expenses logged.</div>
-      <div class="export-actions">
-        <button class="btn btn-sm" onclick="exportCSV()">Download CSV</button>
-        <button class="btn btn-sm btn-primary" onclick="exportPDF()">Download PDF</button>
-      </div>
+
+    <!-- Category breakdown table -->
+    <div class="table-section" style="margin-top:1.25rem;">
+      <div class="table-header"><div class="table-title">Category totals</div></div>
+      <div id="category-breakdown"></div>
     </div>
   </div>
 
@@ -228,7 +376,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/fireba
 import { getFirestore, collection, addDoc, deleteDoc, doc, query, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
 import { getStorage, ref, uploadString, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-storage.js";
 
-// ── Firebase config ───────────────────────────────────────────────────────────
+// ── Config ────────────────────────────────────────────────────────────────────
 const firebaseConfig = {
   apiKey: "AIzaSyAun3Pl1UzjFATAFCb8SxuXqOfw0qsmuko",
   authDomain: "skylane-515de.firebaseapp.com",
@@ -237,8 +385,6 @@ const firebaseConfig = {
   messagingSenderId: "391640319800",
   appId: "1:391640319800:web:7699f961f6fd73ebb0a3cd"
 };
-
-// ── Cloudflare Worker URL (proxies Anthropic securely) ───────────────────────
 const WORKER_URL = "https://skylane-api.mpratt1809.workers.dev";
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -247,36 +393,40 @@ const db      = getFirestore(fbApp);
 const storage = getStorage(fbApp);
 
 const CAT_COLORS = {
-  'Equipment & hardware':     { bg:'#e6f1fb', color:'#185fa5' },
-  'Software & subscriptions': { bg:'#eeedfe', color:'#534ab7' },
-  'Office supplies':          { bg:'#eaf3de', color:'#3b6d11' },
-  'Travel & transport':       { bg:'#faeeda', color:'#854f0b' },
-  'Meals & entertainment':    { bg:'#faece7', color:'#993c1d' },
-  'Professional services':    { bg:'#fbeaf0', color:'#993556' },
-  'Other':                    { bg:'#f2f1ef', color:'#5f5e5a' }
+  'Equipment & hardware':     { bg:'#e6f1fb', color:'#185fa5', chart:'#378ADD' },
+  'Software & subscriptions': { bg:'#eeedfe', color:'#534ab7', chart:'#7F77DD' },
+  'Office supplies':          { bg:'#eaf3de', color:'#3b6d11', chart:'#639922' },
+  'Travel & transport':       { bg:'#faeeda', color:'#854f0b', chart:'#EF9F27' },
+  'Meals & entertainment':    { bg:'#faece7', color:'#993c1d', chart:'#D85A30' },
+  'Professional services':    { bg:'#fbeaf0', color:'#993556', chart:'#D4537E' },
+  'Other':                    { bg:'#f2f1ef', color:'#5f5e5a', chart:'#888780' }
 };
+const CATS = Object.keys(CAT_COLORS);
 
 let expenses = [];
 let currentFilter = 'all';
+let currentPeriod = 'monthly';
 let currentImageBase64 = null;
 let currentImageDataURL = null;
 let lineItemsData = [];
+let barChart = null;
+let donutChart = null;
 
-// ── Sync indicator ────────────────────────────────────────────────────────────
+// ── Sync ──────────────────────────────────────────────────────────────────────
 function setSyncStatus(state) {
   document.getElementById('sync-dot').className = 'sync-dot ' + state;
   document.getElementById('sync-label').textContent = state === 'live' ? 'Live' : state === 'offline' ? 'Offline' : 'Connecting…';
 }
 
-// ── Real-time Firestore listener ──────────────────────────────────────────────
 function startListener() {
   const q = query(collection(db, 'expenses'), orderBy('saved_at', 'desc'));
   onSnapshot(q, snap => {
     expenses = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-    renderTable(); updateStats(); setSyncStatus('live');
+    renderTable(); updateStats(); renderCharts(); renderCategoryBreakdown();
+    setSyncStatus('live');
   }, err => {
     console.error(err); setSyncStatus('offline');
-    document.getElementById('table-wrap').innerHTML = '<div class="empty-state">Could not connect to database. Check your internet connection.</div>';
+    document.getElementById('table-wrap').innerHTML = '<div class="empty-state">Could not connect. Check your internet connection.</div>';
   });
 }
 
@@ -289,6 +439,23 @@ function initYearFilter() {
   }
   sel.value = yr;
 }
+
+// ── Tab navigation ────────────────────────────────────────────────────────────
+window.switchTab = (id, btn) => {
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + id).classList.add('active');
+  btn.classList.add('active');
+  if (id === 'charts') { setTimeout(renderCharts, 50); }
+};
+
+window.switchUploadMode = (mode, btn) => {
+  document.querySelectorAll('.upload-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('upload-receipt-zone').style.display = mode === 'receipt' ? 'block' : 'none';
+  const mf = document.getElementById('manual-form');
+  mf.classList.toggle('active', mode === 'manual');
+};
 
 // ── Upload handlers ───────────────────────────────────────────────────────────
 window.handleDragOver = e => { e.preventDefault(); document.getElementById('upload-zone').classList.add('dragover'); };
@@ -352,13 +519,12 @@ async function scanReceiptWithAI(b64, mime) {
     });
     clearInterval(ticker);
     const rawText = await res.text();
-    if (!res.ok) throw new Error('Worker returned ' + res.status + ': ' + rawText.substring(0, 200));
+    if (!res.ok) throw new Error('Worker returned ' + res.status + ': ' + rawText.substring(0,200));
     const data = JSON.parse(rawText);
     if (data.error) throw new Error('API error: ' + (data.error.message || JSON.stringify(data.error)));
-    if (!data.content || !data.content.length) throw new Error('Unexpected response: ' + rawText.substring(0, 200));
+    if (!data.content || !data.content.length) throw new Error('Unexpected response: ' + rawText.substring(0,200));
     const text = data.content.map(c => c.text||'').join('');
-    const clean = text.replace(/```json|```/g,'').trim();
-    populateReviewForm(JSON.parse(clean));
+    populateReviewForm(JSON.parse(text.replace(/```json|```/g,'').trim()));
   } catch(err) {
     clearInterval(ticker);
     console.error('Scan error:', err);
@@ -374,12 +540,13 @@ function populateReviewForm(data) {
   document.getElementById('f-tax').value      = data.tax != null ? Number(data.tax).toFixed(2) : '';
   document.getElementById('f-payment').value  = (data.payment_method && data.payment_method !== 'Unknown') ? data.payment_method : '';
   document.getElementById('f-category').value = data.suggested_category || '';
+  document.getElementById('f-recurring').checked = false;
   document.getElementById('receipt-thumb').src = currentImageDataURL;
 
   const badge = document.getElementById('confidence-badge');
-  if (data.confidence === 'high')   { badge.textContent = 'High confidence';    badge.className = 'badge badge-green'; }
-  else if (data.confidence === 'medium') { badge.textContent = 'Review suggested'; badge.className = 'badge badge-amber'; }
-  else                              { badge.textContent = 'Manual review needed'; badge.className = 'badge badge-amber'; }
+  if (data.confidence === 'high')        { badge.textContent = 'High confidence';     badge.className = 'badge badge-green'; }
+  else if (data.confidence === 'medium') { badge.textContent = 'Review suggested';    badge.className = 'badge badge-amber'; }
+  else                                   { badge.textContent = 'Manual review needed'; badge.className = 'badge badge-amber'; }
 
   const clarify = document.getElementById('clarify-box');
   if (data.clarification_needed) { clarify.textContent = '⚠ ' + data.clarification_needed; clarify.classList.add('active'); }
@@ -405,7 +572,7 @@ function renderLineItems() {
 
 window.toggleLineItem = i => { lineItemsData[i].removed = !lineItemsData[i].removed; renderLineItems(); };
 
-// ── Save ──────────────────────────────────────────────────────────────────────
+// ── Save receipt ──────────────────────────────────────────────────────────────
 window.confirmSave = async () => {
   const vendor   = document.getElementById('f-vendor').value.trim();
   const date     = document.getElementById('f-date').value;
@@ -415,7 +582,6 @@ window.confirmSave = async () => {
 
   const btn = document.getElementById('save-btn');
   btn.textContent = 'Saving…'; btn.disabled = true;
-
   try {
     let image_url = null;
     if (currentImageDataURL) {
@@ -425,22 +591,50 @@ window.confirmSave = async () => {
     }
     await addDoc(collection(db, 'expenses'), {
       vendor, date, total,
-      tax:      parseFloat(document.getElementById('f-tax').value) || 0,
-      payment:  document.getElementById('f-payment').value,
-      spender:  document.getElementById('f-spender').value,
+      tax:       parseFloat(document.getElementById('f-tax').value) || 0,
+      payment:   document.getElementById('f-payment').value,
+      spender:   document.getElementById('f-spender').value,
       category,
-      notes:    document.getElementById('f-notes').value.trim(),
+      notes:     document.getElementById('f-notes').value.trim(),
+      recurring: document.getElementById('f-recurring').checked,
       line_items: lineItemsData.filter(li => !li.removed),
       image_url,
-      saved_at: new Date().toISOString()
+      saved_at:  new Date().toISOString()
     });
-    resetForm();
-    showToast('Receipt saved to SkyLane.');
+    resetForm(); showToast('Receipt saved to SkyLane.');
+    switchTab('log', document.querySelector('.nav-tab'));
   } catch(err) {
-    console.error(err);
-    showToast('Error saving — check your Firebase Storage rules.');
+    console.error(err); showToast('Error saving — check Firebase Storage rules.');
     btn.textContent = 'Confirm & save'; btn.disabled = false;
   }
+};
+
+// ── Save manual expense ───────────────────────────────────────────────────────
+window.saveManualExpense = async () => {
+  const vendor   = document.getElementById('m-vendor').value.trim();
+  const date     = document.getElementById('m-date').value;
+  const total    = parseFloat(document.getElementById('m-total').value);
+  const category = document.getElementById('m-category').value;
+  if (!vendor || !date || isNaN(total) || !category) { showToast('Please fill in vendor, date, total, and category.'); return; }
+  try {
+    await addDoc(collection(db, 'expenses'), {
+      vendor, date, total,
+      tax:       parseFloat(document.getElementById('m-tax').value) || 0,
+      payment:   document.getElementById('m-payment').value,
+      spender:   document.getElementById('m-spender').value,
+      category,
+      notes:     document.getElementById('m-notes').value.trim(),
+      recurring: document.getElementById('m-recurring').checked,
+      line_items: [],
+      image_url:  null,
+      saved_at:   new Date().toISOString()
+    });
+    ['m-vendor','m-date','m-total','m-tax','m-notes'].forEach(id => document.getElementById(id).value = '');
+    ['m-payment','m-spender','m-category'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('m-recurring').checked = false;
+    showToast('Expense saved.');
+    switchTab('log', document.querySelector('.nav-tab'));
+  } catch(err) { console.error(err); showToast('Error saving expense.'); }
 };
 
 window.cancelReview = () => resetForm();
@@ -450,6 +644,7 @@ function resetForm() {
   document.getElementById('file-input').value = '';
   ['f-vendor','f-date','f-total','f-tax','f-notes'].forEach(id => document.getElementById(id).value = '');
   ['f-payment','f-spender','f-category'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('f-recurring').checked = false;
   document.getElementById('clarify-box').classList.remove('active');
   const btn = document.getElementById('save-btn');
   if (btn) { btn.textContent = 'Confirm & save'; btn.disabled = false; }
@@ -471,7 +666,8 @@ window.setFilter = (f, btn) => {
 function getFiltered() {
   const year = document.getElementById('year-filter').value;
   let list = expenses.filter(e => e.date && e.date.startsWith(year));
-  if (currentFilter !== 'all') list = list.filter(e => e.category === currentFilter);
+  if (currentFilter === 'recurring') list = list.filter(e => e.recurring);
+  else if (currentFilter !== 'all') list = list.filter(e => e.category === currentFilter);
   return list;
 }
 
@@ -479,19 +675,19 @@ function renderTable() {
   const filtered = getFiltered();
   const wrap = document.getElementById('table-wrap');
   if (!filtered.length) {
-    wrap.innerHTML = '<div class="empty-state">No expenses found — upload your first receipt above.</div>';
+    wrap.innerHTML = '<div class="empty-state">No expenses found — add your first expense in the "Add expense" tab.</div>';
     document.getElementById('export-label').textContent = 'No expenses to export yet.';
     return;
   }
-  const total = filtered.reduce((s,e) => s + (e.total||0), 0);
+  const total = filtered.reduce((s,e) => s+(e.total||0), 0);
   document.getElementById('export-label').textContent = `${filtered.length} expense${filtered.length!==1?'s':''} · Total: $${total.toFixed(2)}`;
   wrap.innerHTML = `<div style="overflow-x:auto"><table class="expense-table">
     <thead><tr><th></th><th>Vendor</th><th>Date</th><th>Category</th><th>Spender</th><th>Payment</th><th>Tax</th><th>Total</th><th></th></tr></thead>
     <tbody>${filtered.map(e => {
       const col = CAT_COLORS[e.category] || CAT_COLORS['Other'];
       return `<tr>
-        <td>${e.image_url ? `<img class="thumb-tiny" src="${e.image_url}" onclick="openLightbox('${e.image_url}')" alt="receipt"/>` : ''}</td>
-        <td>${e.vendor||'—'}</td>
+        <td>${e.image_url ? `<img class="thumb-tiny" src="${e.image_url}" onclick="openLightbox('${e.image_url}')" alt="receipt"/>` : '<div style="width:32px"></div>'}</td>
+        <td>${e.vendor||'—'}${e.recurring ? ' <span class="badge badge-recurring" style="font-size:10px;padding:1px 6px;">↻</span>' : ''}</td>
         <td style="font-family:var(--mono);font-size:12px;">${e.date||'—'}</td>
         <td><span class="cat-pill" style="background:${col.bg};color:${col.color}">${e.category}</span></td>
         <td>${e.spender||'—'}</td>
@@ -517,16 +713,136 @@ window.deleteExpense = async (id, imageUrl) => {
 function updateStats() {
   const year = document.getElementById('year-filter').value;
   const yr = expenses.filter(e => e.date && e.date.startsWith(year));
-  const total = yr.reduce((s,e) => s + (e.total||0), 0);
+  const total = yr.reduce((s,e) => s+(e.total||0), 0);
+  const recurringTotal = yr.filter(e => e.recurring).reduce((s,e) => s+(e.total||0), 0);
   document.getElementById('stat-total').textContent = '$' + total.toFixed(2);
   document.getElementById('stat-count').textContent = yr.length;
   document.getElementById('stat-year').textContent  = year;
-  document.getElementById('stat-deductible').textContent = '$' + total.toFixed(2);
+  document.getElementById('stat-recurring').textContent = '$' + (recurringTotal / 12).toFixed(2);
   const cats = {};
-  yr.forEach(e => { if (e.category) cats[e.category] = (cats[e.category]||0) + (e.total||0); });
+  yr.forEach(e => { if (e.category) cats[e.category] = (cats[e.category]||0)+(e.total||0); });
   const top = Object.entries(cats).sort((a,b) => b[1]-a[1])[0];
   document.getElementById('stat-top').textContent    = top ? top[0] : '—';
-  document.getElementById('stat-top-amt').textContent = top ? '$' + top[1].toFixed(2) : '';
+  document.getElementById('stat-top-amt').textContent = top ? '$'+top[1].toFixed(2) : '';
+}
+
+// ── Charts ────────────────────────────────────────────────────────────────────
+window.setPeriod = (period, btn) => {
+  currentPeriod = period;
+  document.querySelectorAll('.period-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderCharts();
+};
+
+function renderCharts() {
+  const year = parseInt(document.getElementById('year-filter').value);
+  const yr = expenses.filter(e => e.date && e.date.startsWith(String(year)));
+
+  // Bar chart data
+  let barLabels = [], barData = [];
+
+  if (currentPeriod === 'monthly') {
+    document.getElementById('bar-chart-title').textContent = 'Spending by month';
+    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    barLabels = months;
+    barData = months.map((_, mi) => {
+      const m = String(mi+1).padStart(2,'0');
+      return yr.filter(e => e.date && e.date.startsWith(`${year}-${m}`)).reduce((s,e) => s+(e.total||0), 0);
+    });
+  } else if (currentPeriod === 'quarterly') {
+    document.getElementById('bar-chart-title').textContent = 'Spending by quarter';
+    barLabels = ['Q1','Q2','Q3','Q4'];
+    barData = [['01','02','03'],['04','05','06'],['07','08','09'],['10','11','12']].map(months =>
+      yr.filter(e => e.date && months.some(m => e.date.startsWith(`${year}-${m}`))).reduce((s,e) => s+(e.total||0), 0)
+    );
+  } else {
+    document.getElementById('bar-chart-title').textContent = 'Cumulative spending YTD';
+    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    barLabels = months;
+    let running = 0;
+    barData = months.map((_, mi) => {
+      const m = String(mi+1).padStart(2,'0');
+      running += yr.filter(e => e.date && e.date.startsWith(`${year}-${m}`)).reduce((s,e) => s+(e.total||0), 0);
+      return running;
+    });
+  }
+
+  // Donut data by category
+  const catTotals = CATS.map(c => yr.filter(e => e.category === c).reduce((s,e) => s+(e.total||0), 0));
+  const activeCats = CATS.filter((_, i) => catTotals[i] > 0);
+  const activeVals = catTotals.filter(v => v > 0);
+  const activeColors = activeCats.map(c => CAT_COLORS[c].chart);
+
+  // Destroy existing charts
+  if (barChart) { barChart.destroy(); barChart = null; }
+  if (donutChart) { donutChart.destroy(); donutChart = null; }
+
+  const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  const gridColor = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)';
+  const tickColor = isDark ? '#888' : '#aaa';
+
+  barChart = new Chart(document.getElementById('bar-chart'), {
+    type: 'bar',
+    data: {
+      labels: barLabels,
+      datasets: [{ data: barData, backgroundColor: '#1a1a2e', borderRadius: 4, borderSkipped: false }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { grid: { color: gridColor }, ticks: { color: tickColor, font: { size: 11 } } },
+        y: { grid: { color: gridColor }, ticks: { color: tickColor, font: { size: 11 }, callback: v => '$'+v.toLocaleString() } }
+      }
+    }
+  });
+
+  donutChart = new Chart(document.getElementById('donut-chart'), {
+    type: 'doughnut',
+    data: {
+      labels: activeCats,
+      datasets: [{ data: activeVals, backgroundColor: activeColors, borderWidth: 0, hoverOffset: 4 }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false, cutout: '65%',
+      plugins: {
+        legend: { position: 'bottom', labels: { font: { size: 11 }, color: tickColor, padding: 12, boxWidth: 12 } },
+        tooltip: { callbacks: { label: ctx => ` $${ctx.raw.toFixed(2)}` } }
+      }
+    }
+  });
+}
+
+function renderCategoryBreakdown() {
+  const year = document.getElementById('year-filter').value;
+  const yr = expenses.filter(e => e.date && e.date.startsWith(year));
+  const total = yr.reduce((s,e) => s+(e.total||0), 0);
+  const rows = CATS.map(c => {
+    const catExp = yr.filter(e => e.category === c);
+    const catTotal = catExp.reduce((s,e) => s+(e.total||0), 0);
+    const pct = total > 0 ? Math.round(catTotal / total * 100) : 0;
+    return { c, catTotal, count: catExp.length, pct };
+  }).filter(r => r.catTotal > 0).sort((a,b) => b.catTotal - a.catTotal);
+
+  const el = document.getElementById('category-breakdown');
+  if (!rows.length) { el.innerHTML = '<div class="empty-state">No expenses logged yet.</div>'; return; }
+  el.innerHTML = `<div style="overflow-x:auto"><table class="expense-table">
+    <thead><tr><th>Category</th><th>Expenses</th><th>Total</th><th style="width:160px">Share</th></tr></thead>
+    <tbody>${rows.map(r => {
+      const col = CAT_COLORS[r.c] || CAT_COLORS['Other'];
+      return `<tr>
+        <td><span class="cat-pill" style="background:${col.bg};color:${col.color}">${r.c}</span></td>
+        <td>${r.count}</td>
+        <td class="amount-cell">$${r.catTotal.toFixed(2)}</td>
+        <td><div style="display:flex;align-items:center;gap:8px">
+          <div style="flex:1;height:6px;background:var(--bg);border-radius:99px;overflow:hidden">
+            <div style="width:${r.pct}%;height:100%;background:${col.chart};border-radius:99px;"></div>
+          </div>
+          <span style="font-family:var(--mono);font-size:12px;color:var(--muted);min-width:30px">${r.pct}%</span>
+        </div></td>
+      </tr>`;
+    }).join('')}</tbody>
+  </table></div>`;
 }
 
 // ── Export CSV ────────────────────────────────────────────────────────────────
@@ -534,10 +850,12 @@ window.exportCSV = () => {
   const year = document.getElementById('year-filter').value;
   const data = expenses.filter(e => e.date && e.date.startsWith(year));
   if (!data.length) { showToast('No expenses to export.'); return; }
-  const headers = ['Date','Vendor','Category','Spender','Payment Method','Tax','Total','Business Purpose','Line Items'];
+  const headers = ['Date','Vendor','Category','Recurring','Spender','Payment Method','Tax','Total','Business Purpose','Line Items'];
   const rows = data.map(e => [
-    e.date, e.vendor, e.category, e.spender||'', e.payment||'',
-    Number(e.tax||0).toFixed(2), Number(e.total||0).toFixed(2), e.notes||'',
+    e.date, e.vendor, e.category, e.recurring ? 'Yes' : 'No',
+    e.spender||'', e.payment||'',
+    Number(e.tax||0).toFixed(2), Number(e.total||0).toFixed(2),
+    e.notes||'',
     (e.line_items||[]).map(li => `${li.description} ($${Number(li.amount||0).toFixed(2)})`).join('; ')
   ]);
   const csv = [headers,...rows].map(r => r.map(c => `"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
@@ -554,20 +872,20 @@ window.exportPDF = () => {
   if (!data.length) { showToast('No expenses to export.'); return; }
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({ orientation:'landscape', unit:'mm', format:'a4' });
-  const total    = data.reduce((s,e) => s+(e.total||0), 0);
+  const total = data.reduce((s,e) => s+(e.total||0), 0);
   const totalTax = data.reduce((s,e) => s+(e.tax||0), 0);
   doc.setFillColor(26,26,46); doc.rect(0,0,297,20,'F');
   doc.setTextColor(255,255,255); doc.setFontSize(14); doc.setFont('helvetica','bold');
   doc.text('SkyLane — Business Expense Report', 14, 13);
   doc.setFontSize(10); doc.setFont('helvetica','normal');
   doc.text(`Tax Year: ${year}`, 230, 13);
-  doc.setTextColor(50,50,50); doc.setFontSize(10);
-  doc.text(`Total expenses: $${total.toFixed(2)}`, 14, 30);
-  doc.text(`Total tax paid: $${totalTax.toFixed(2)}`, 90, 30);
-  doc.text(`Receipts: ${data.length}`, 170, 30);
+  doc.setTextColor(50,50,50);
+  doc.text(`Total: $${total.toFixed(2)}`, 14, 30);
+  doc.text(`Tax paid: $${totalTax.toFixed(2)}`, 80, 30);
+  doc.text(`Receipts: ${data.length}`, 160, 30);
   doc.text(`Generated: ${new Date().toLocaleDateString('en-US')}`, 220, 30);
-  const cols = ['Date','Vendor','Category','Spender','Payment','Tax','Total','Notes'];
-  const colW = [22,52,38,28,26,18,20,73];
+  const cols = ['Date','Vendor','Category','Rec.','Spender','Payment','Tax','Total','Notes'];
+  const colW = [22,48,36,12,26,24,18,20,61];
   let y = 42, x = 14;
   doc.setFillColor(240,240,244); doc.rect(14,y-5,269,8,'F');
   doc.setFont('helvetica','bold'); doc.setFontSize(8);
@@ -576,19 +894,115 @@ window.exportPDF = () => {
   data.forEach((e,idx) => {
     y += 9; if (y > 185) { doc.addPage(); y = 20; } x = 14;
     if (idx%2===0) { doc.setFillColor(249,248,246); doc.rect(14,y-5,269,8,'F'); }
-    [e.date,(e.vendor||'').substring(0,22),(e.category||'').substring(0,20),e.spender||'—',e.payment||'—',
-     `$${Number(e.tax||0).toFixed(2)}`,`$${Number(e.total||0).toFixed(2)}`,(e.notes||'').substring(0,40)
+    [e.date,(e.vendor||'').substring(0,20),(e.category||'').substring(0,18),e.recurring?'↻':'',
+     e.spender||'—',e.payment||'—',`$${Number(e.tax||0).toFixed(2)}`,`$${Number(e.total||0).toFixed(2)}`,
+     (e.notes||'').substring(0,30)
     ].forEach((v,i) => { doc.text(String(v),x,y); x += colW[i]; });
   });
   y += 12;
   doc.setFont('helvetica','bold'); doc.setFillColor(26,26,46); doc.setTextColor(255,255,255);
   doc.rect(14,y-5,269,9,'F');
   doc.text('TOTAL',14,y);
-  const taxX = 14 + colW.slice(0,5).reduce((a,b)=>a+b,0);
+  const taxX = 14+colW.slice(0,6).reduce((a,b)=>a+b,0);
   doc.text(`$${totalTax.toFixed(2)}`,taxX,y);
-  doc.text(`$${total.toFixed(2)}`,taxX+colW[5],y);
+  doc.text(`$${total.toFixed(2)}`,taxX+colW[6],y);
   doc.save(`SkyLane_Expenses_${year}.pdf`);
   showToast('PDF downloaded.');
+};
+
+// ── Tax Summary PDF ───────────────────────────────────────────────────────────
+window.exportTaxSummary = () => {
+  const year = document.getElementById('year-filter').value;
+  const data = expenses.filter(e => e.date && e.date.startsWith(year));
+  if (!data.length) { showToast('No expenses to export.'); return; }
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation:'portrait', unit:'mm', format:'a4' });
+  const total    = data.reduce((s,e) => s+(e.total||0), 0);
+  const totalTax = data.reduce((s,e) => s+(e.tax||0), 0);
+  const recurring = data.filter(e => e.recurring);
+  const oneTime   = data.filter(e => !e.recurring);
+
+  // Header
+  doc.setFillColor(26,26,46); doc.rect(0,0,210,28,'F');
+  doc.setTextColor(255,255,255);
+  doc.setFontSize(18); doc.setFont('helvetica','bold');
+  doc.text('SkyLane', 14, 12);
+  doc.setFontSize(11); doc.setFont('helvetica','normal');
+  doc.text('Business Expense Tax Summary', 14, 20);
+  doc.setFontSize(10);
+  doc.text(`Tax Year ${year}`, 160, 12);
+  doc.text(`Generated ${new Date().toLocaleDateString('en-US')}`, 148, 20);
+
+  // Summary box
+  doc.setTextColor(50,50,50);
+  doc.setFillColor(249,248,246); doc.rect(14,34,182,32,'F');
+  doc.setDrawColor(220,220,216); doc.rect(14,34,182,32,'S');
+  doc.setFont('helvetica','bold'); doc.setFontSize(9);
+  doc.text('TOTAL BUSINESS EXPENSES', 20, 43);
+  doc.text('TOTAL TAX PAID', 80, 43);
+  doc.text('TOTAL RECEIPTS', 140, 43);
+  doc.setFontSize(16);
+  doc.text(`$${total.toFixed(2)}`, 20, 56);
+  doc.text(`$${totalTax.toFixed(2)}`, 80, 56);
+  doc.text(String(data.length), 140, 56);
+
+  // By category
+  let y = 78;
+  doc.setFontSize(11); doc.setFont('helvetica','bold'); doc.setTextColor(26,26,46);
+  doc.text('Expenses by category', 14, y); y += 8;
+
+  CATS.forEach(cat => {
+    const catExp = data.filter(e => e.category === cat);
+    if (!catExp.length) return;
+    const catTotal = catExp.reduce((s,e) => s+(e.total||0), 0);
+    if (y > 260) { doc.addPage(); y = 20; }
+    doc.setFillColor(245,245,243); doc.rect(14,y-4,182,7,'F');
+    doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(50,50,50);
+    doc.text(cat, 16, y);
+    doc.text(`$${catTotal.toFixed(2)}`, 160, y);
+    doc.text(`${catExp.length} expense${catExp.length!==1?'s':''}`, 185, y, {align:'right'});
+    y += 9;
+    doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(100,100,100);
+    catExp.forEach(e => {
+      if (y > 270) { doc.addPage(); y = 20; }
+      doc.text(`${e.date}  ${(e.vendor||'').substring(0,30)}${e.recurring?' (recurring)':''}`, 20, y);
+      doc.text(`$${Number(e.total||0).toFixed(2)}`, 185, y, {align:'right'});
+      y += 6;
+    });
+    y += 3;
+  });
+
+  // Recurring summary
+  if (recurring.length) {
+    if (y > 240) { doc.addPage(); y = 20; }
+    y += 4;
+    doc.setFontSize(11); doc.setFont('helvetica','bold'); doc.setTextColor(26,26,46);
+    doc.text('Recurring expenses', 14, y); y += 8;
+    doc.setFontSize(8); doc.setFont('helvetica','normal'); doc.setTextColor(100,100,100);
+    doc.text('These expenses repeat monthly and should be reviewed for ongoing deductibility.', 14, y); y += 8;
+    recurring.forEach(e => {
+      if (y > 270) { doc.addPage(); y = 20; }
+      doc.setTextColor(80,80,80);
+      doc.text(`${e.vendor||'—'}  ·  ${e.category}  ·  ${e.date}`, 20, y);
+      doc.text(`$${Number(e.total||0).toFixed(2)}/mo`, 185, y, {align:'right'});
+      y += 6;
+    });
+    y += 4;
+    doc.setFont('helvetica','bold');
+    doc.text(`Recurring annual total: $${recurring.reduce((s,e)=>s+(e.total||0),0).toFixed(2)}`, 20, y);
+  }
+
+  // Footer
+  const pageCount = doc.getNumberOfPages();
+  for (let i = 1; i <= pageCount; i++) {
+    doc.setPage(i);
+    doc.setFontSize(8); doc.setFont('helvetica','normal'); doc.setTextColor(180,180,180);
+    doc.text(`SkyLane Business Hub  ·  Tax Year ${year}  ·  Page ${i} of ${pageCount}`, 105, 290, {align:'center'});
+  }
+
+  doc.save(`SkyLane_TaxSummary_${year}.pdf`);
+  showToast('Tax summary downloaded.');
 };
 
 // ── Lightbox ──────────────────────────────────────────────────────────────────
