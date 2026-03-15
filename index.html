@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SkyLane — Business Hub</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #f9f8f6;
+      --surface: #ffffff;
+      --border: rgba(0,0,0,0.09);
+      --border-hover: rgba(0,0,0,0.18);
+      --text-primary: #1a1a1a;
+      --text-secondary: #6b6b6b;
+      --text-tertiary: #ababab;
+      --radius-md: 8px;
+      --radius-lg: 14px;
+      --font: 'DM Sans', sans-serif;
+      --font-mono: 'DM Mono', monospace;
+    }
+
+    body {
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--text-primary);
+      min-height: 100vh;
+      padding: 2rem 1.5rem 4rem;
+    }
+
+    .page {
+      max-width: 860px;
+      margin: 0 auto;
+    }
+
+    /* Header */
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-bottom: 1.5rem;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 2rem;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .logo-area { display: flex; align-items: center; gap: 12px; }
+
+    .logo-mark {
+      width: 40px; height: 40px;
+      background: #1a1a2e;
+      border-radius: var(--radius-md);
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .logo-mark svg { width: 22px; height: 22px; }
+
+    .logo-text .name {
+      font-size: 19px;
+      font-weight: 500;
+      color: var(--text-primary);
+      letter-spacing: -0.3px;
+    }
+
+    .logo-text .tagline {
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-top: 1px;
+    }
+
+    .header-date {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--text-tertiary);
+    }
+
+    /* Section label */
+    .section-label {
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.09em;
+      text-transform: uppercase;
+      color: var(--text-tertiary);
+      margin-bottom: 1rem;
+    }
+
+    /* Grid */
+    .widget-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+      gap: 12px;
+      margin-bottom: 3rem;
+    }
+
+    /* Cards */
+    .widget-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 1.25rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      min-height: 150px;
+      cursor: default;
+      transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s;
+      text-decoration: none;
+      color: inherit;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .widget-card.linked {
+      cursor: pointer;
+    }
+
+    .widget-card.linked:hover {
+      border-color: var(--border-hover);
+      box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+      transform: translateY(-1px);
+    }
+
+    .widget-card.empty {
+      border-style: dashed;
+      opacity: 0.55;
+    }
+
+    .card-top { display: flex; flex-direction: column; gap: 10px; }
+
+    .card-icon {
+      width: 34px; height: 34px;
+      border-radius: 9px;
+      display: flex; align-items: center; justify-content: center;
+    }
+
+    .card-title {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-primary);
+    }
+
+    .card-desc {
+      font-size: 12px;
+      color: var(--text-secondary);
+      line-height: 1.55;
+      margin-top: 2px;
+    }
+
+    .card-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 1rem;
+    }
+
+    .pill {
+      font-size: 11px;
+      font-weight: 500;
+      padding: 3px 9px;
+      border-radius: 99px;
+    }
+
+    .pill-live { background: #eaf3de; color: #3b6d11; }
+    .pill-soon { background: #f2f1ef; color: #9a9a9a; }
+
+    .card-arrow {
+      font-size: 15px;
+      color: var(--text-tertiary);
+      transition: transform 0.15s, color 0.15s;
+    }
+
+    .widget-card.linked:hover .card-arrow {
+      transform: translateX(3px);
+      color: var(--text-secondary);
+    }
+
+    /* Placeholder bar animation */
+    .card-placeholder {
+      height: 8px;
+      border-radius: 99px;
+      background: #ebebeb;
+      margin-top: 6px;
+    }
+
+    .card-placeholder.short { width: 55%; }
+
+    /* Footer */
+    .hub-footer {
+      border-top: 1px solid var(--border);
+      padding-top: 1.25rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .footer-text {
+      font-size: 12px;
+      color: var(--text-tertiary);
+    }
+
+    .footer-badge {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--text-tertiary);
+      background: #f0efed;
+      padding: 3px 9px;
+      border-radius: 99px;
+    }
+
+    /* Fade-in animation */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .widget-card {
+      animation: fadeUp 0.35s ease both;
+    }
+
+    .widget-card:nth-child(1) { animation-delay: 0.05s; }
+    .widget-card:nth-child(2) { animation-delay: 0.10s; }
+    .widget-card:nth-child(3) { animation-delay: 0.15s; }
+    .widget-card:nth-child(4) { animation-delay: 0.20s; }
+    .widget-card:nth-child(5) { animation-delay: 0.25s; }
+
+    /* Mobile */
+    @media (max-width: 500px) {
+      body { padding: 1.25rem 1rem 3rem; }
+      .widget-grid { grid-template-columns: 1fr 1fr; }
+      .header { flex-direction: column; align-items: flex-start; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+
+    <header class="header">
+      <div class="logo-area">
+        <div class="logo-mark">
+          <svg viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M3 16 L11 4 L19 16" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M7 16 L11 9.5 L15 16" stroke="white" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" opacity="0.55"/>
+          </svg>
+        </div>
+        <div class="logo-text">
+          <div class="name">SkyLane</div>
+          <div class="tagline">Business Hub</div>
+        </div>
+      </div>
+      <div class="header-date" id="today-date"></div>
+    </header>
+
+    <div class="section-label">Widgets</div>
+
+    <div class="widget-grid">
+
+      <!-- Analytics -->
+      <div class="widget-card empty" id="card-analytics">
+        <div class="card-top">
+          <div class="card-icon" style="background:#e6f1fb;">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <rect x="1" y="9" width="3" height="6" rx="1" fill="#185fa5"/>
+              <rect x="6" y="5" width="3" height="10" rx="1" fill="#185fa5"/>
+              <rect x="11" y="2" width="3" height="13" rx="1" fill="#185fa5" opacity="0.5"/>
+            </svg>
+          </div>
+          <div>
+            <div class="card-title">Analytics</div>
+            <div class="card-desc">Charts, KPIs & performance metrics</div>
+          </div>
+        </div>
+        <div class="card-footer">
+          <span class="pill pill-soon">Coming soon</span>
+        </div>
+      </div>
+
+      <!-- Tasks -->
+      <div class="widget-card empty" id="card-tasks">
+        <div class="card-top">
+          <div class="card-icon" style="background:#eaf3de;">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <rect x="1" y="2" width="14" height="3" rx="1" fill="#3b6d11"/>
+              <rect x="1" y="7" width="10" height="3" rx="1" fill="#3b6d11"/>
+              <rect x="1" y="12" width="6" height="2" rx="1" fill="#3b6d11" opacity="0.45"/>
+            </svg>
+          </div>
+          <div>
+            <div class="card-title">Tasks</div>
+            <div class="card-desc">Project tracking & to-dos</div>
+          </div>
+        </div>
+        <div class="card-footer">
+          <span class="pill pill-soon">Coming soon</span>
+        </div>
+      </div>
+
+      <!-- Finance -->
+      <div class="widget-card empty" id="card-finance">
+        <div class="card-top">
+          <div class="card-icon" style="background:#faeeda;">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <rect x="2" y="1" width="12" height="14" rx="1.5" stroke="#ba7517" stroke-width="1.2"/>
+              <path d="M5 5.5h6M5 8h4M5 10.5h3" stroke="#ba7517" stroke-width="1" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <div>
+            <div class="card-title">Finance</div>
+            <div class="card-desc">Invoicing, expenses & budgets</div>
+          </div>
+        </div>
+        <div class="card-footer">
+          <span class="pill pill-soon">Coming soon</span>
+        </div>
+      </div>
+
+      <!-- CRM -->
+      <div class="widget-card empty" id="card-crm">
+        <div class="card-top">
+          <div class="card-icon" style="background:#eeedfe;">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <circle cx="8" cy="5" r="3" stroke="#534ab7" stroke-width="1.2"/>
+              <path d="M2 14c0-3.314 2.686-5 6-5s6 1.686 6 5" stroke="#534ab7" stroke-width="1.2" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <div>
+            <div class="card-title">CRM</div>
+            <div class="card-desc">Contacts, leads & relationships</div>
+          </div>
+        </div>
+        <div class="card-footer">
+          <span class="pill pill-soon">Coming soon</span>
+        </div>
+      </div>
+
+      <!-- Custom -->
+      <div class="widget-card empty" id="card-custom">
+        <div class="card-top">
+          <div class="card-icon" style="background:#f2f1ef;">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <circle cx="8" cy="8" r="6" stroke="#aaa" stroke-width="1.2"/>
+              <path d="M8 5v6M5 8h6" stroke="#aaa" stroke-width="1.2" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <div>
+            <div class="card-title">Custom</div>
+            <div class="card-desc">Your next widget</div>
+          </div>
+        </div>
+        <div class="card-footer">
+          <span class="pill pill-soon">Coming soon</span>
+        </div>
+      </div>
+
+    </div>
+
+    <footer class="hub-footer">
+      <span class="footer-text">SkyLane Business Hub &mdash; built with Claude</span>
+      <span class="footer-badge">v1.0</span>
+    </footer>
+
+  </div>
+
+  <script>
+    const d = new Date();
+    const opts = { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' };
+    document.getElementById('today-date').textContent = d.toLocaleDateString('en-US', opts);
+
+    // Helper: activate a card with a live URL
+    // Usage: activateCard('analytics', 'https://your-widget-url.netlify.app')
+    function activateCard(id, url) {
+      const card = document.getElementById('card-' + id);
+      if (!card) return;
+      card.classList.remove('empty');
+      card.classList.add('linked');
+      card.style.cursor = 'pointer';
+      const pill = card.querySelector('.pill');
+      if (pill) { pill.className = 'pill pill-live'; pill.textContent = 'Live'; }
+      const footer = card.querySelector('.card-footer');
+      if (footer && !footer.querySelector('.card-arrow')) {
+        const arrow = document.createElement('span');
+        arrow.className = 'card-arrow';
+        arrow.textContent = '→';
+        footer.appendChild(arrow);
+      }
+      card.addEventListener('click', () => window.open(url, '_blank'));
+    }
+
+    // ── Add your widget URLs here as you build them ──────────────────
+    // activateCard('analytics', 'https://skylane-analytics.netlify.app');
+    // activateCard('tasks',     'https://skylane-tasks.netlify.app');
+    // activateCard('finance',   'https://skylane-finance.netlify.app');
+    // activateCard('crm',       'https://skylane-crm.netlify.app');
+    // activateCard('custom',    'https://skylane-custom.netlify.app');
+    // ────────────────────────────────────────────────────────────────
+  </script>
+</body>
+</html>
