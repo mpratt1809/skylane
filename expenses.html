@@ -238,9 +238,8 @@ const firebaseConfig = {
   appId: "1:391640319800:web:7699f961f6fd73ebb0a3cd"
 };
 
-// ── Anthropic API key ─────────────────────────────────────────────────────────
-// Replace with your actual key from console.anthropic.com
-const ANTHROPIC_KEY = "YOUR_ANTHROPIC_API_KEY";
+// ── Cloudflare Worker URL (proxies Anthropic securely) ───────────────────────
+const WORKER_URL = "https://skylane-api.mpratt1809.workers.dev";
 // ─────────────────────────────────────────────────────────────────────────────
 
 const fbApp  = initializeApp(firebaseConfig);
@@ -315,9 +314,9 @@ async function scanReceiptWithAI(b64, mime) {
   const el = document.getElementById('scan-label');
   const ticker = setInterval(() => { el.textContent = labels[i++ % labels.length]; }, 1800);
   try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
+    const res = await fetch(WORKER_URL, {
       method: 'POST',
-      headers: { 'Content-Type':'application/json', 'x-api-key': ANTHROPIC_KEY, 'anthropic-version':'2023-06-01' },
+      headers: { 'Content-Type':'application/json' },
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514', max_tokens: 1000,
         messages: [{ role:'user', content: [
