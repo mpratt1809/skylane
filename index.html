@@ -262,23 +262,23 @@
 
     <div class="widget-grid">
 
-      <!-- Analytics -->
-      <div class="widget-card empty" id="card-analytics">
+      <!-- Expenses -->
+      <div class="widget-card linked" id="card-expenses" onclick="window.open('expenses.html','_self')">
         <div class="card-top">
-          <div class="card-icon" style="background:#e6f1fb;">
+          <div class="card-icon" style="background:#faeeda;">
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-              <rect x="1" y="9" width="3" height="6" rx="1" fill="#185fa5"/>
-              <rect x="6" y="5" width="3" height="10" rx="1" fill="#185fa5"/>
-              <rect x="11" y="2" width="3" height="13" rx="1" fill="#185fa5" opacity="0.5"/>
+              <rect x="2" y="1" width="12" height="14" rx="1.5" stroke="#ba7517" stroke-width="1.2"/>
+              <path d="M5 5.5h6M5 8h4M5 10.5h3" stroke="#ba7517" stroke-width="1" stroke-linecap="round"/>
             </svg>
           </div>
           <div>
-            <div class="card-title">Analytics</div>
-            <div class="card-desc">Charts, KPIs & performance metrics</div>
+            <div class="card-title">Expenses</div>
+            <div class="card-desc">Receipt scanning & tax tracking</div>
           </div>
         </div>
         <div class="card-footer">
-          <span class="pill pill-soon">Coming soon</span>
+          <span class="pill pill-live">Live</span>
+          <span class="card-arrow">→</span>
         </div>
       </div>
 
@@ -363,7 +363,7 @@
 
     <footer class="hub-footer">
       <span class="footer-text">SkyLane Business Hub &mdash; built with Claude</span>
-      <span class="footer-badge">v1.0</span>
+      <span class="footer-badge">v1.1</span>
     </footer>
 
   </div>
@@ -373,8 +373,11 @@
     const opts = { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' };
     document.getElementById('today-date').textContent = d.toLocaleDateString('en-US', opts);
 
-    // Helper: activate a card with a live URL
-    // Usage: activateCard('analytics', 'https://your-widget-url.netlify.app')
+    // ── Widget links — update as new widgets go live ─────────────────
+    // activateCard('tasks',   'tasks.html');
+    // activateCard('finance', 'finance.html');
+    // activateCard('crm',     'crm.html');
+    // ─────────────────────────────────────────────────────────────────
     function activateCard(id, url) {
       const card = document.getElementById('card-' + id);
       if (!card) return;
@@ -390,16 +393,8 @@
         arrow.textContent = '→';
         footer.appendChild(arrow);
       }
-      card.addEventListener('click', () => window.open(url, '_blank'));
+      card.addEventListener('click', () => window.open(url, '_self'));
     }
-
-    // ── Add your widget URLs here as you build them ──────────────────
-    // activateCard('analytics', 'https://skylane-analytics.netlify.app');
-    // activateCard('tasks',     'https://skylane-tasks.netlify.app');
-    // activateCard('finance',   'https://skylane-finance.netlify.app');
-    // activateCard('crm',       'https://skylane-crm.netlify.app');
-    // activateCard('custom',    'https://skylane-custom.netlify.app');
-    // ────────────────────────────────────────────────────────────────
   </script>
 </body>
 </html>
