@@ -335,7 +335,7 @@ async function scanReceiptWithAI(b64, mime) {
         model: 'claude-sonnet-4-20250514', max_tokens: 1000,
         messages: [{ role:'user', content: [
           { type:'image', source:{ type:'base64', media_type: mime, data: b64 } },
-          { type:'text', text:`You are a receipt scanner for a US small business. Respond ONLY with valid JSON, no markdown.
+          { type:'text', text:`You are a receipt scanner for a US small business. Respond ONLY with valid JSON, no markdown, no extra text before or after.
 {
   "vendor": "string or null",
   "date": "YYYY-MM-DD or null",
@@ -351,13 +351,18 @@ async function scanReceiptWithAI(b64, mime) {
       })
     });
     clearInterval(ticker);
-    const data = await res.json();
+    const rawText = await res.text();
+    if (!res.ok) throw new Error('Worker returned ' + res.status + ': ' + rawText.substring(0, 200));
+    const data = JSON.parse(rawText);
+    if (data.error) throw new Error('API error: ' + (data.error.message || JSON.stringify(data.error)));
+    if (!data.content || !data.content.length) throw new Error('Unexpected response: ' + rawText.substring(0, 200));
     const text = data.content.map(c => c.text||'').join('');
-    populateReviewForm(JSON.parse(text.replace(/```json|```/g,'').trim()));
+    const clean = text.replace(/```json|```/g,'').trim();
+    populateReviewForm(JSON.parse(clean));
   } catch(err) {
     clearInterval(ticker);
     console.error('Scan error:', err);
-    populateReviewForm({ vendor:'', date:'', total:null, tax:null, payment_method:'', line_items:[], confidence:'low', clarification_needed:'Could not auto-scan this receipt — please fill in details manually.', suggested_category:'' });
+    populateReviewForm({ vendor:'', date:'', total:null, tax:null, payment_method:'', line_items:[], confidence:'low', clarification_needed:'Scan failed: ' + err.message + '. Please fill in details manually.', suggested_category:'' });
   }
 }
 
