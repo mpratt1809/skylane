@@ -6,24 +6,28 @@
 <title>skylane — expenses</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Mono:wght@400;500&family=Inter:wght@300;400;500&display=swap" rel="stylesheet"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   :root {
-    --bg: #f9f8f6; --surface: #ffffff;
-    --border: rgba(0,0,0,0.09); --border-hover: rgba(0,0,0,0.18);
-    --text: #1a1a1a; --muted: #6b6b6b; --faint: #ababab;
-    --accent: #1a1a2e; --accent-light: #e8e8f0;
-    --green: #3b6d11; --green-bg: #eaf3de;
-    --amber: #854f0b; --amber-bg: #faeeda;
-    --red: #a32d2d; --red-bg: #fcebeb;
-    --blue: #185fa5; --blue-bg: #e6f1fb;
+    --bg:       #2d3d38;
+    --surface:  #243530;
+    --border:   #3a4d48;
+    --text:     #f0ece4;
+    --muted:    #7a9898;
+    --faint:    #3d5048;
+    --accent:   #7a9aac;
+    --accent-light: #1e3040;
+    --green:    #6a9a7a; --green-bg: #1e3028;
+    --amber:    #c8a870; --amber-bg: #2a2818;
+    --red:      #c87870; --red-bg:   #2a1c1c;
+    --blue:     #7a9aac; --blue-bg:  #1e2c38;
     --radius: 10px; --radius-sm: 6px;
-    --font: 'DM Sans', sans-serif; --mono: 'DM Mono', monospace;
+    --font: 'Syne', sans-serif; --mono: 'DM Mono', monospace;
   }
-  body { font-family: var(--font); background: var(--bg); color: var(--text); min-height: 100vh; }
+  body { font-family: var(--font); background: var(--bg); color: var(--text); min-height: 100vh; } ::placeholder { color: var(--faint); opacity: 1; }
   .page { max-width: 980px; margin: 0 auto; padding: 2rem 1.25rem 4rem; }
 
   /* Header */
@@ -36,21 +40,21 @@
   .header-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
   .btn { font-family: var(--font); font-size: 13px; font-weight: 500; padding: 7px 14px; border-radius: var(--radius-sm); border: 1px solid var(--border-hover); background: var(--surface); color: var(--text); cursor: pointer; transition: background 0.15s; white-space: nowrap; }
   .btn:hover { background: var(--bg); }
-  .btn-primary { background: var(--accent); color: #fff; border-color: var(--accent); }
-  .btn-primary:hover { background: #2a2a4e; }
+  .btn-primary { background: var(--accent); color: #1a2830; border-color: var(--accent); font-weight: 700; }
+  .btn-primary:hover { background: #8aaabb; }
   .btn-sm { padding: 5px 10px; font-size: 12px; }
   .btn-green { background: var(--green-bg); color: var(--green); border-color: transparent; }
   .btn-green:hover { background: #d4ebbf; }
   .sync-label { font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 5px; }
   .sync-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
-  .sync-dot.live { background: var(--green); }
+  .sync-dot.live { background: var(--accent); }
   .sync-dot.offline { background: var(--red); }
   .sync-dot.loading { background: var(--amber); animation: pulse 1s ease-in-out infinite; }
 
   /* Nav tabs */
   .nav-tabs { display: flex; gap: 4px; margin-bottom: 1.75rem; border-bottom: 1px solid var(--border); }
   .nav-tab { font-family: var(--font); font-size: 13px; font-weight: 500; padding: 8px 16px; border: none; background: none; color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; transition: color 0.15s, border-color 0.15s; }
-  .nav-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+  .nav-tab.active { color: var(--accent); border-bottom-color: var(--accent); font-family: 'Syne', sans-serif; font-weight: 800; }
   .nav-tab:hover { color: var(--text); }
   .tab-content { display: none; }
   .tab-content.active { display: block; }
@@ -84,7 +88,7 @@
   .badge-amber { background: var(--amber-bg); color: var(--amber); }
   .badge-green { background: var(--green-bg); color: var(--green); }
   .badge-blue { background: var(--blue-bg); color: var(--blue); }
-  .badge-recurring { background: #eeedfe; color: #534ab7; }
+  .badge-recurring { background: var(--blue-bg); color: var(--accent); }
 
   /* Review form */
   .review-layout { display: grid; grid-template-columns: 190px 1fr; gap: 1.5rem; }
@@ -95,13 +99,13 @@
   .field { display: flex; flex-direction: column; gap: 4px; }
   .field.full { grid-column: 1 / -1; }
   .field label { font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.07em; color: var(--faint); }
-  .field input, .field select, .field textarea { font-family: var(--font); font-size: 13px; color: var(--text); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 8px 10px; background: var(--surface); transition: border-color 0.15s; }
+  .field input, .field select, .field textarea { font-family: var(--font); font-size: 13px; color: var(--text); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 8px 10px; background: var(--surface); transition: border-color 0.15s; } .field select option { background: var(--surface); color: var(--text); }
   .field input:focus, .field select:focus, .field textarea:focus { outline: none; border-color: var(--accent); }
   .field textarea { resize: vertical; min-height: 60px; }
-  .checkbox-row { display: flex; align-items: center; gap: 8px; padding: 10px; background: #eeedfe; border-radius: var(--radius-sm); border: 1px solid #c8c4f0; }
+  .checkbox-row { display: flex; align-items: center; gap: 8px; padding: 10px; background: var(--accent-light); border-radius: var(--radius-sm); border: 1px solid var(--accent); }
   .checkbox-row input[type=checkbox] { width: 15px; height: 15px; accent-color: #534ab7; cursor: pointer; }
-  .checkbox-row label { font-size: 13px; color: #534ab7; font-weight: 500; cursor: pointer; }
-  .checkbox-row span { font-size: 12px; color: #7f77dd; margin-left: 2px; }
+  .checkbox-row label { font-size: 13px; color: var(--accent); font-weight: 500; cursor: pointer; }
+  .checkbox-row span { font-size: 12px; color: var(--muted); margin-left: 2px; }
 
   /* Line items */
   .line-items-section { margin-top: 1.25rem; }
@@ -132,7 +136,7 @@
   .charts-title { font-size: 16px; font-weight: 500; }
   .period-tabs { display: flex; gap: 4px; }
   .period-tab { font-family: var(--font); font-size: 12px; font-weight: 500; padding: 4px 12px; border-radius: 99px; border: 1px solid var(--border); background: var(--surface); color: var(--muted); cursor: pointer; transition: all 0.15s; }
-  .period-tab.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .period-tab.active { background: var(--accent); color: #1a2830; border-color: var(--accent); }
   .charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
   @media (max-width: 640px) { .charts-grid { grid-template-columns: 1fr; } }
   .chart-card { background: var(--bg); border-radius: var(--radius-sm); padding: 1rem; }
@@ -145,7 +149,7 @@
   .table-title { font-size: 16px; font-weight: 500; }
   .filter-row { display: flex; gap: 8px; flex-wrap: wrap; }
   .filter-btn { font-family: var(--font); font-size: 12px; padding: 4px 10px; border-radius: 99px; border: 1px solid var(--border); background: var(--surface); color: var(--muted); cursor: pointer; transition: all 0.15s; }
-  .filter-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .filter-btn.active { background: var(--accent); color: #1a2830; border-color: var(--accent); font-weight: 700; }
   .expense-table { width: 100%; border-collapse: collapse; font-size: 13px; }
   .expense-table th { font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.07em; color: var(--faint); padding: 0 10px 8px; text-align: left; border-bottom: 1px solid var(--border); }
   .expense-table td { padding: 10px; border-bottom: 1px solid var(--border); vertical-align: middle; color: var(--muted); }
@@ -180,9 +184,9 @@
       <div class="logo-mark">
         <svg viewBox="0 0 22 22" fill="none"><path d="M3 16L11 4l8 12" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M7 16l4-6.5L15 16" stroke="white" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" opacity="0.55"/></svg>
       </div>
-      <div><div class="logo-name">skylane</div><div class="logo-sub">Expense Tracker</div></div>
+      <div><div class="logo-name" style="font-family:'Syne',sans-serif;font-weight:800;font-size:18px;text-transform:lowercase;letter-spacing:-0.02em;">sky<span style="color:var(--accent)">lane</span></div><div class="logo-sub">Expense Tracker</div></div>
     </div>
-    <div class="header-actions">
+    <div class="header-actions"><a href="index.html" style="font-family:'Syne',sans-serif;font-size:12px;font-weight:700;color:var(--muted);text-decoration:none;text-transform:lowercase;letter-spacing:-0.01em;padding:7px 12px;border:1px solid var(--border);border-radius:6px;" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--muted)'">← hub</a>
       <div class="sync-label"><span class="sync-dot loading" id="sync-dot"></span><span id="sync-label">Connecting…</span></div>
       <select class="year-select" id="year-filter" onchange="renderTable();updateStats();renderCharts();"></select>
       <button class="btn" onclick="exportCSV()">Export CSV</button>
@@ -219,7 +223,7 @@
       <div id="upload-receipt-zone">
         <div class="upload-zone" id="upload-zone" onclick="document.getElementById('file-input').click()" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event)">
           <div class="upload-icon">
-            <svg viewBox="0 0 40 40" fill="none"><rect x="6" y="4" width="28" height="34" rx="4" stroke="#1a1a2e" stroke-width="2"/><path d="M13 14h14M13 20h10M13 26h8" stroke="#1a1a2e" stroke-width="1.5" stroke-linecap="round"/><circle cx="30" cy="30" r="8" fill="#f9f8f6" stroke="#1a1a2e" stroke-width="1.5"/><path d="M30 26v8M26 30h8" stroke="#1a1a2e" stroke-width="1.5" stroke-linecap="round"/></svg>
+            <svg viewBox="0 0 40 40" fill="none"><rect x="6" y="4" width="28" height="34" rx="4" stroke="var(--accent)" stroke-width="2"/><path d="M13 14h14M13 20h10M13 26h8" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round"/><circle cx="30" cy="30" r="8" fill="#f9f8f6" stroke="var(--accent)" stroke-width="1.5"/><path d="M30 26v8M26 30h8" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round"/></svg>
           </div>
           <div class="upload-title">Upload a receipt</div>
           <div class="upload-hint">Click to browse or drag and drop — JPG, PNG, PDF</div>
@@ -576,28 +580,51 @@ window.toggleLineItem = i => { lineItemsData[i].removed = !lineItemsData[i].remo
 window.confirmSave = async () => {
   const vendor   = document.getElementById('f-vendor').value.trim();
   const date     = document.getElementById('f-date').value;
-  const total    = parseFloat(document.getElementById('f-total').value);
   const category = document.getElementById('f-category').value;
+
+  // Recalculate total & tax from kept line items if any exist
+  const keptItems = lineItemsData.filter(li => !li.removed);
+  let total, tax;
+  if (lineItemsData.length > 0 && keptItems.length > 0) {
+    const rawTotal = parseFloat(document.getElementById('f-total').value) || 0;
+    const rawTax   = parseFloat(document.getElementById('f-tax').value) || 0;
+    const allTotal = lineItemsData.reduce((s, li) => s + Number(li.amount||0), 0);
+    const keptTotal = keptItems.reduce((s, li) => s + Number(li.amount||0), 0);
+    const ratio = allTotal > 0 ? keptTotal / allTotal : 1;
+    total = parseFloat((rawTotal * ratio).toFixed(2));
+    tax   = parseFloat((rawTax * ratio).toFixed(2));
+    document.getElementById('f-total').value = total.toFixed(2);
+    document.getElementById('f-tax').value   = tax.toFixed(2);
+  } else {
+    total = parseFloat(document.getElementById('f-total').value);
+    tax   = parseFloat(document.getElementById('f-tax').value) || 0;
+  }
+
   if (!vendor || !date || isNaN(total) || !category) { showToast('Please fill in vendor, date, total, and category.'); return; }
 
   const btn = document.getElementById('save-btn');
   btn.textContent = 'Saving…'; btn.disabled = true;
   try {
+    // Try to upload image — but don't block save if Storage rules deny it
     let image_url = null;
     if (currentImageDataURL) {
-      const imgRef = ref(storage, `receipts/${Date.now()}.jpg`);
-      await uploadString(imgRef, currentImageDataURL, 'data_url');
-      image_url = await getDownloadURL(imgRef);
+      try {
+        const imgRef = ref(storage, `receipts/${Date.now()}.jpg`);
+        await uploadString(imgRef, currentImageDataURL, 'data_url');
+        image_url = await getDownloadURL(imgRef);
+      } catch(imgErr) {
+        console.warn('Image upload skipped (check Firebase Storage rules):', imgErr.message);
+      }
     }
     await addDoc(collection(db, 'expenses'), {
       vendor, date, total,
-      tax:       parseFloat(document.getElementById('f-tax').value) || 0,
+      tax,
       payment:   document.getElementById('f-payment').value,
       spender:   document.getElementById('f-spender').value,
       category,
       notes:     document.getElementById('f-notes').value.trim(),
       recurring: document.getElementById('f-recurring').checked,
-      line_items: lineItemsData.filter(li => !li.removed),
+      line_items: keptItems,
       image_url,
       saved_at:  new Date().toISOString()
     });
