@@ -1,0 +1,819 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>skylane — clients</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Mono:wght@400;500&family=Inter:wght@300;400;500&display=swap" rel="stylesheet"/>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #2d3d38; --surface: #243530; --border: #3a4d48;
+  --text: #f0ece4; --muted: #7a9898; --faint: #3d5048;
+  --accent: #7a9aac; --accent-light: #1e3040;
+  --green: #6a9a7a; --green-bg: #1e3028;
+  --amber: #c8a870; --amber-bg: #2a2818;
+  --red: #c87870; --red-bg: #2a1c1c;
+  --radius: 10px; --radius-sm: 6px;
+  --font: 'Syne', sans-serif; --sans: 'Inter', sans-serif; --mono: 'DM Mono', monospace;
+}
+body { font-family: var(--sans); background: var(--bg); color: var(--text); min-height: 100vh; }
+.page { max-width: 1000px; margin: 0 auto; padding: 2rem 1.25rem 4rem; }
+::placeholder { color: var(--faint); opacity: 1; }
+
+/* Header */
+.header { display: flex; align-items: center; justify-content: space-between; padding-bottom: 1.25rem; border-bottom: 1px solid var(--border); margin-bottom: 1.75rem; flex-wrap: wrap; gap: 1rem; }
+.logo-area { display: flex; align-items: center; gap: 10px; }
+.logo-mark { width: 34px; height: 34px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.logo-mark svg { width: 18px; height: 18px; }
+.logo-name { font-family: var(--font); font-size: 17px; font-weight: 800; text-transform: lowercase; letter-spacing: -0.02em; }
+.logo-name span { color: var(--accent); }
+.logo-sub { font-size: 11px; font-weight: 300; color: var(--muted); margin-top: 1px; letter-spacing: 0.04em; }
+.header-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.sync-label { font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 5px; }
+.sync-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.sync-dot.live { background: var(--accent); }
+.sync-dot.offline { background: var(--red); }
+.sync-dot.loading { background: var(--amber); animation: pulse 1s ease-in-out infinite; }
+@keyframes pulse { 0%,100%{opacity:0.3} 50%{opacity:1} }
+
+/* Buttons */
+.btn { font-family: var(--sans); font-size: 13px; font-weight: 500; padding: 7px 14px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--surface); color: var(--text); cursor: pointer; transition: background 0.15s; white-space: nowrap; }
+.btn:hover { background: var(--accent-light); }
+.btn-primary { background: var(--accent); color: #1a2830; border-color: var(--accent); font-weight: 700; }
+.btn-primary:hover { background: #8aaabb; }
+.btn-sm { padding: 5px 10px; font-size: 12px; }
+.btn-icon { padding: 6px 10px; font-size: 14px; }
+.btn-danger { color: var(--red); border-color: transparent; }
+.btn-danger:hover { background: var(--red-bg); }
+.back-link { font-family: var(--font); font-size: 12px; font-weight: 700; color: var(--muted); text-decoration: none; text-transform: lowercase; letter-spacing: -0.01em; padding: 7px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); transition: color 0.15s; }
+.back-link:hover { color: var(--accent); }
+
+/* Stats */
+.summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 1.75rem; }
+.stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1rem; }
+.stat-label { font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.1em; color: var(--faint); margin-bottom: 6px; }
+.stat-value { font-size: 22px; font-weight: 500; font-family: var(--mono); color: var(--text); }
+.stat-sub { font-size: 11px; color: var(--muted); margin-top: 3px; }
+
+/* Toolbar */
+.toolbar { display: flex; align-items: center; gap: 10px; margin-bottom: 1.25rem; flex-wrap: wrap; }
+.search-wrap { flex: 1; min-width: 200px; position: relative; }
+.search-wrap input { width: 100%; font-family: var(--sans); font-size: 13px; color: var(--text); background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 8px 10px 8px 34px; }
+.search-wrap input:focus { outline: none; border-color: var(--accent); }
+.search-icon { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--faint); font-size: 14px; pointer-events: none; }
+.filter-row { display: flex; gap: 6px; flex-wrap: wrap; }
+.filter-btn { font-family: var(--sans); font-size: 11px; padding: 4px 10px; border-radius: 99px; border: 1px solid var(--border); background: var(--surface); color: var(--muted); cursor: pointer; transition: all 0.15s; }
+.filter-btn.active { background: var(--accent); color: #1a2830; border-color: var(--accent); font-weight: 700; }
+.view-toggle { display: flex; gap: 4px; }
+.view-btn { padding: 6px 10px; background: var(--surface); border: 1px solid var(--border); color: var(--muted); cursor: pointer; font-size: 13px; transition: all 0.15s; border-radius: var(--radius-sm); }
+.view-btn.active { background: var(--accent-light); color: var(--accent); border-color: var(--accent); }
+
+/* Table view */
+.client-table-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+.client-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.client-table th { font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.1em; color: var(--faint); padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--border); background: var(--surface); }
+.client-table td { padding: 12px; border-bottom: 1px solid var(--border); vertical-align: middle; color: var(--muted); }
+.client-table tr:last-child td { border-bottom: none; }
+.client-table tr:hover td { background: var(--accent-light); cursor: pointer; }
+.client-table td:first-child { color: var(--text); font-weight: 500; }
+.avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--accent-light); border: 1px solid var(--accent); display: flex; align-items: center; justify-content: center; font-family: var(--font); font-size: 12px; font-weight: 800; color: var(--accent); flex-shrink: 0; overflow: hidden; }
+.avatar img { width: 100%; height: 100%; object-fit: cover; }
+.name-cell { display: flex; align-items: center; gap: 10px; }
+.type-pill { font-size: 10px; font-weight: 500; padding: 2px 8px; border-radius: 99px; }
+
+/* Card grid view */
+.client-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
+.client-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem; cursor: pointer; transition: border-color 0.15s, background 0.15s; }
+.client-card:hover { border-color: var(--accent); background: var(--accent-light); }
+.client-card-avatar { width: 48px; height: 48px; border-radius: 50%; background: var(--accent-light); border: 1px solid var(--accent); display: flex; align-items: center; justify-content: center; font-family: var(--font); font-size: 16px; font-weight: 800; color: var(--accent); margin-bottom: 10px; overflow: hidden; }
+.client-card-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.client-card-name { font-family: var(--font); font-size: 15px; font-weight: 800; text-transform: lowercase; letter-spacing: -0.01em; color: var(--text); margin-bottom: 3px; }
+.client-card-type { font-size: 11px; color: var(--muted); margin-bottom: 8px; }
+.client-card-meta { font-size: 11px; color: var(--faint); }
+
+/* Empty state */
+.empty-state { text-align: center; padding: 3rem 1rem; color: var(--faint); font-size: 14px; }
+
+/* Modal overlay */
+.modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 100; overflow-y: auto; padding: 2rem 1rem; }
+.modal-overlay.open { display: flex; align-items: flex-start; justify-content: center; }
+.modal { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); width: 100%; max-width: 640px; overflow: hidden; }
+.modal-header { display: flex; align-items: center; justify-content: space-between; padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--border); }
+.modal-title { font-family: var(--font); font-size: 16px; font-weight: 800; text-transform: lowercase; }
+.modal-close { background: none; border: none; color: var(--muted); font-size: 20px; cursor: pointer; padding: 0 4px; line-height: 1; }
+.modal-close:hover { color: var(--text); }
+.modal-body { padding: 1.5rem; }
+.modal-footer { display: flex; gap: 10px; padding: 1rem 1.5rem; border-top: 1px solid var(--border); justify-content: flex-end; }
+
+/* Forms */
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+@media (max-width: 500px) { .form-grid { grid-template-columns: 1fr; } }
+.field { display: flex; flex-direction: column; gap: 4px; }
+.field.full { grid-column: 1 / -1; }
+.field label { font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.1em; color: var(--faint); }
+.field input, .field select, .field textarea { font-family: var(--sans); font-size: 13px; color: var(--text); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 8px 10px; background: var(--surface); transition: border-color 0.15s; }
+.field select option { background: var(--surface); color: var(--text); }
+.field input:focus, .field select:focus, .field textarea:focus { outline: none; border-color: var(--accent); }
+.field textarea { resize: vertical; min-height: 70px; }
+.section-divider { font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.14em; color: var(--faint); margin: 1.25rem 0 0.75rem; padding-bottom: 6px; border-bottom: 1px solid var(--border); grid-column: 1 / -1; }
+
+/* Profile view */
+.profile-view { display: none; }
+.profile-view.active { display: block; animation: fadeUp 0.3s ease both; }
+.profile-header { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.5rem; margin-bottom: 1.25rem; display: flex; align-items: flex-start; gap: 1.25rem; flex-wrap: wrap; }
+.profile-avatar { width: 64px; height: 64px; border-radius: 50%; background: var(--accent-light); border: 2px solid var(--accent); display: flex; align-items: center; justify-content: center; font-family: var(--font); font-size: 22px; font-weight: 800; color: var(--accent); flex-shrink: 0; overflow: hidden; cursor: pointer; }
+.profile-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.profile-info { flex: 1; }
+.profile-name { font-family: var(--font); font-size: 26px; font-weight: 800; text-transform: lowercase; letter-spacing: -0.02em; color: var(--text); margin-bottom: 4px; }
+.profile-type { font-size: 12px; color: var(--muted); margin-bottom: 10px; }
+.profile-meta { display: flex; gap: 16px; flex-wrap: wrap; }
+.profile-meta-item { font-size: 12px; color: var(--muted); }
+.profile-meta-item span { color: var(--text); }
+.profile-actions { display: flex; gap: 8px; margin-left: auto; flex-wrap: wrap; }
+
+/* Profile tabs */
+.profile-tabs { display: flex; gap: 4px; margin-bottom: 1.25rem; border-bottom: 1px solid var(--border); }
+.profile-tab { font-family: var(--sans); font-size: 13px; font-weight: 500; padding: 8px 16px; border: none; background: none; color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; transition: color 0.15s; }
+.profile-tab.active { color: var(--accent); border-bottom-color: var(--accent); font-family: var(--font); font-weight: 800; }
+.profile-tab-content { display: none; }
+.profile-tab-content.active { display: block; animation: fadeUp 0.25s ease both; }
+
+/* Overview tab */
+.overview-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 1.25rem; }
+@media (max-width: 600px) { .overview-grid { grid-template-columns: 1fr; } }
+.detail-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1rem 1.25rem; }
+.detail-card-title { font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.1em; color: var(--faint); margin-bottom: 10px; }
+.detail-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; padding: 5px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+.detail-row:last-child { border-bottom: none; }
+.detail-key { color: var(--muted); flex-shrink: 0; }
+.detail-val { color: var(--text); text-align: right; word-break: break-word; }
+.notes-block { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1rem 1.25rem; margin-bottom: 1.25rem; }
+.notes-block-title { font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.1em; color: var(--faint); margin-bottom: 8px; }
+.notes-text { font-size: 13px; color: var(--muted); line-height: 1.6; white-space: pre-wrap; }
+
+/* Pieces tab */
+.pieces-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 10px; margin-bottom: 1.25rem; }
+.piece-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+.piece-img { width: 100%; height: 140px; object-fit: cover; background: var(--accent-light); display: flex; align-items: center; justify-content: center; color: var(--faint); font-size: 12px; cursor: pointer; }
+.piece-img img { width: 100%; height: 100%; object-fit: cover; }
+.piece-info { padding: 10px; }
+.piece-title { font-family: var(--font); font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 3px; }
+.piece-meta { font-size: 11px; color: var(--muted); line-height: 1.5; }
+.piece-price { font-family: var(--mono); font-size: 12px; color: var(--accent); margin-top: 4px; }
+.add-piece-btn { background: var(--surface); border: 1px dashed var(--border); border-radius: var(--radius); min-height: 200px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; cursor: pointer; color: var(--faint); font-size: 13px; transition: border-color 0.15s, color 0.15s; }
+.add-piece-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+/* Comms tab */
+.comm-log { display: flex; flex-direction: column; gap: 8px; margin-bottom: 1.25rem; }
+.comm-item { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px 14px; display: flex; gap: 12px; align-items: flex-start; }
+.comm-method { font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.1em; padding: 3px 8px; border-radius: 99px; white-space: nowrap; flex-shrink: 0; }
+.comm-email   { background: var(--accent-light); color: var(--accent); }
+.comm-phone   { background: var(--green-bg); color: var(--green); }
+.comm-instagram { background: #2a1a28; color: #c090b8; }
+.comm-inperson  { background: var(--amber-bg); color: var(--amber); }
+.comm-gallery   { background: #1a2428; color: #7a9898; }
+.comm-designer  { background: #281820; color: #b87898; }
+.comm-body { flex: 1; }
+.comm-note { font-size: 13px; color: var(--text); line-height: 1.5; margin-bottom: 4px; }
+.comm-date { font-size: 11px; color: var(--faint); font-family: var(--mono); }
+.add-comm-form { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1rem 1.25rem; }
+.add-comm-title { font-size: 12px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.1em; color: var(--faint); margin-bottom: 10px; }
+.comm-form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+@media (max-width: 500px) { .comm-form-row { grid-template-columns: 1fr; } }
+
+/* Toast & lightbox */
+.toast { position: fixed; bottom: 24px; right: 24px; background: var(--accent); color: #1a2830; font-size: 13px; font-weight: 700; padding: 10px 16px; border-radius: var(--radius-sm); opacity: 0; transform: translateY(8px); transition: all 0.25s; pointer-events: none; z-index: 999; }
+.toast.show { opacity: 1; transform: translateY(0); }
+.lightbox { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 1000; align-items: center; justify-content: center; padding: 1rem; }
+.lightbox.open { display: flex; }
+.lightbox img { max-width: 100%; max-height: 90vh; border-radius: var(--radius); }
+.lightbox-close { position: absolute; top: 16px; right: 20px; color: #fff; font-size: 28px; cursor: pointer; }
+#avatar-input, #piece-img-input { display: none; }
+
+@keyframes fadeUp { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+
+/* Mobile */
+@media (max-width: 600px) {
+  .profile-header { flex-direction: column; }
+  .profile-actions { margin-left: 0; }
+  .overview-grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- Header -->
+  <div class="header">
+    <div class="logo-area">
+      <div class="logo-mark">
+        <svg viewBox="0 0 22 22" fill="none"><path d="M3 16L11 4l8 12" stroke="#7a9aac" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M7 16l4-6.5L15 16" stroke="#7a9aac" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" opacity="0.55"/></svg>
+      </div>
+      <div>
+        <div class="logo-name">sky<span>lane</span></div>
+        <div class="logo-sub">clients</div>
+      </div>
+    </div>
+    <div class="header-actions">
+      <div class="sync-label"><span class="sync-dot loading" id="sync-dot"></span><span id="sync-label">Connecting…</span></div>
+      <a href="index.html" class="back-link">← hub</a>
+      <button class="btn btn-primary" onclick="openAddClient()">+ add client</button>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="summary-grid">
+    <div class="stat-card"><div class="stat-label">Total clients</div><div class="stat-value" id="stat-total">0</div><div class="stat-sub">all types</div></div>
+    <div class="stat-card"><div class="stat-label">Collectors</div><div class="stat-value" id="stat-collectors">0</div><div class="stat-sub">individual buyers</div></div>
+    <div class="stat-card"><div class="stat-label">Pieces sold</div><div class="stat-value" id="stat-pieces">0</div><div class="stat-sub">across all clients</div></div>
+    <div class="stat-card"><div class="stat-label">Total revenue</div><div class="stat-value" id="stat-revenue">$0</div><div class="stat-sub">from pieces logged</div></div>
+  </div>
+
+  <!-- List view -->
+  <div id="list-view">
+    <div class="toolbar">
+      <div class="search-wrap">
+        <span class="search-icon">⌕</span>
+        <input type="text" id="search-input" placeholder="search clients…" oninput="renderList()"/>
+      </div>
+      <div class="filter-row">
+        <button class="filter-btn active" onclick="setTypeFilter('all',this)">all</button>
+        <button class="filter-btn" onclick="setTypeFilter('Individual collector',this)">collector</button>
+        <button class="filter-btn" onclick="setTypeFilter('Interior designer',this)">designer</button>
+        <button class="filter-btn" onclick="setTypeFilter('Business',this)">business</button>
+        <button class="filter-btn" onclick="setTypeFilter('Gallery',this)">gallery</button>
+        <button class="filter-btn" onclick="setTypeFilter('Commission',this)">commission</button>
+      </div>
+      <div class="view-toggle">
+        <button class="view-btn active" id="view-table-btn" onclick="setView('table')" title="Table view">☰</button>
+        <button class="view-btn" id="view-grid-btn" onclick="setView('grid')" title="Grid view">⊞</button>
+      </div>
+    </div>
+
+    <div id="table-view-wrap">
+      <div class="client-table-wrap">
+        <table class="client-table">
+          <thead><tr>
+            <th></th><th>Name</th><th>Type</th><th>Email</th><th>Phone</th><th>Last contact</th><th>Pieces</th><th></th>
+          </tr></thead>
+          <tbody id="client-tbody"><tr><td colspan="8"><div class="empty-state">Connecting…</div></td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div id="grid-view-wrap" style="display:none;">
+      <div class="client-grid" id="client-grid-wrap"></div>
+    </div>
+  </div>
+
+  <!-- Profile view -->
+  <div class="profile-view" id="profile-view">
+    <div class="profile-header" id="profile-header"></div>
+    <div class="profile-tabs">
+      <button class="profile-tab active" onclick="switchProfileTab('overview',this)">overview</button>
+      <button class="profile-tab" onclick="switchProfileTab('pieces',this)">pieces</button>
+      <button class="profile-tab" onclick="switchProfileTab('comms',this)">communication</button>
+    </div>
+    <div class="profile-tab-content active" id="ptab-overview"></div>
+    <div class="profile-tab-content" id="ptab-pieces"></div>
+    <div class="profile-tab-content" id="ptab-comms"></div>
+  </div>
+
+</div>
+
+<!-- Add/Edit Client Modal -->
+<div class="modal-overlay" id="client-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-title">add client</div>
+      <button class="modal-close" onclick="closeModal('client-modal')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="section-divider">contact details</div>
+        <div class="field"><label>Full name</label><input type="text" id="c-name" placeholder="e.g. Sarah Mitchell"/></div>
+        <div class="field"><label>Client type</label>
+          <select id="c-type">
+            <option value="">— select —</option>
+            <option>Individual collector</option>
+            <option>Interior designer</option>
+            <option>Business</option>
+            <option>Gallery</option>
+            <option>Commission</option>
+          </select>
+        </div>
+        <div class="field"><label>Email</label><input type="email" id="c-email" placeholder="email@example.com"/></div>
+        <div class="field"><label>Phone</label><input type="tel" id="c-phone" placeholder="+1 (555) 000-0000"/></div>
+        <div class="field"><label>Instagram</label><input type="text" id="c-instagram" placeholder="@handle"/></div>
+        <div class="field"><label>Birthday</label><input type="date" id="c-birthday"/></div>
+        <div class="section-divider">address</div>
+        <div class="field full"><label>Street address</label><input type="text" id="c-address" placeholder="123 Main St"/></div>
+        <div class="field"><label>City</label><input type="text" id="c-city" placeholder="Austin"/></div>
+        <div class="field"><label>State / ZIP</label><input type="text" id="c-state-zip" placeholder="TX 78701"/></div>
+        <div class="section-divider">style & notes</div>
+        <div class="field full"><label>Style preferences</label><textarea id="c-style" placeholder="e.g. Prefers earth tones, large format, abstract landscapes…"></textarea></div>
+        <div class="field full"><label>Notes</label><textarea id="c-notes" placeholder="Any other relevant details…"></textarea></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('client-modal')">cancel</button>
+      <button class="btn btn-primary" id="client-save-btn" onclick="saveClient()">save client</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Piece Modal -->
+<div class="modal-overlay" id="piece-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">add piece</div>
+      <button class="modal-close" onclick="closeModal('piece-modal')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div style="margin-bottom:12px;">
+        <div style="font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:0.1em;color:var(--faint);margin-bottom:8px;">Artwork photo</div>
+        <div id="piece-img-preview" onclick="document.getElementById('piece-img-input').click()" style="width:100%;height:160px;background:var(--accent-light);border:1px dashed var(--border);border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--faint);font-size:13px;overflow:hidden;">
+          click to upload photo
+        </div>
+        <input type="file" id="piece-img-input" accept="image/*" onchange="handlePieceImage(event)"/>
+      </div>
+      <div class="form-grid">
+        <div class="field full"><label>Title</label><input type="text" id="p-title" placeholder="e.g. Autumn Horizon No. 3"/></div>
+        <div class="field"><label>Sale price</label><input type="number" id="p-price" step="0.01" placeholder="0.00"/></div>
+        <div class="field"><label>Date sold</label><input type="date" id="p-date"/></div>
+        <div class="field"><label>Medium</label><input type="text" id="p-medium" placeholder="e.g. Oil on canvas"/></div>
+        <div class="field"><label>Size</label><input type="text" id="p-size" placeholder='e.g. 24" × 36"'/></div>
+        <div class="field full"><label>Notes</label><textarea id="p-notes" placeholder="Certificate of authenticity, provenance, exhibition history…"></textarea></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('piece-modal')">cancel</button>
+      <button class="btn btn-primary" onclick="savePiece()">save piece</button>
+    </div>
+  </div>
+</div>
+
+<!-- Lightbox -->
+<div class="lightbox" id="lightbox" onclick="closeLightbox()">
+  <span class="lightbox-close">&times;</span>
+  <img id="lightbox-img" src="" alt=""/>
+</div>
+<input type="file" id="avatar-input" accept="image/*" onchange="handleAvatarUpload(event)"/>
+<div class="toast" id="toast"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
+import { getFirestore, collection, addDoc, updateDoc, deleteDoc, doc, query, orderBy, onSnapshot, arrayUnion } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAun3Pl1UzjFATAFCb8SxuXqOfw0qsmuko",
+  authDomain: "skylane-515de.firebaseapp.com",
+  projectId: "skylane-515de",
+  storageBucket: "skylane-515de.firebasestorage.app",
+  messagingSenderId: "391640319800",
+  appId: "1:391640319800:web:7699f961f6fd73ebb0a3cd"
+};
+
+const fbApp = initializeApp(firebaseConfig);
+const db = getFirestore(fbApp);
+
+const TYPE_COLORS = {
+  'Individual collector': { bg:'#1e3028', color:'#6a9a7a' },
+  'Interior designer':    { bg:'#1e2838', color:'#7a9aac' },
+  'Business':             { bg:'#2a2818', color:'#c8a870' },
+  'Gallery':              { bg:'#2a1c28', color:'#c090b8' },
+  'Commission':           { bg:'#2a1c1c', color:'#c87870' },
+};
+
+let clients = [];
+let currentTypeFilter = 'all';
+let currentView = 'table';
+let currentClientId = null;
+let editingClientId = null;
+let pieceImageData = null;
+
+// ── Sync ──────────────────────────────────────────────────────────────────────
+function setSyncStatus(state) {
+  document.getElementById('sync-dot').className = 'sync-dot ' + state;
+  document.getElementById('sync-label').textContent = state === 'live' ? 'Live' : state === 'offline' ? 'Offline' : 'Connecting…';
+}
+
+function startListener() {
+  const q = query(collection(db, 'clients'), orderBy('name'));
+  onSnapshot(q, snap => {
+    clients = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    renderList(); updateStats(); setSyncStatus('live');
+    if (currentClientId) renderProfile(currentClientId);
+  }, err => { console.error(err); setSyncStatus('offline'); });
+}
+
+// ── Stats ─────────────────────────────────────────────────────────────────────
+function updateStats() {
+  const total = clients.length;
+  const collectors = clients.filter(c => c.type === 'Individual collector').length;
+  const pieces = clients.reduce((s, c) => s + (c.pieces||[]).length, 0);
+  const revenue = clients.reduce((s, c) => s + (c.pieces||[]).reduce((ps, p) => ps + (Number(p.price)||0), 0), 0);
+  document.getElementById('stat-total').textContent = total;
+  document.getElementById('stat-collectors').textContent = collectors;
+  document.getElementById('stat-pieces').textContent = pieces;
+  document.getElementById('stat-revenue').textContent = '$' + revenue.toLocaleString('en-US', {minimumFractionDigits:0, maximumFractionDigits:0});
+}
+
+// ── Filter & view ─────────────────────────────────────────────────────────────
+window.setTypeFilter = (f, btn) => {
+  currentTypeFilter = f;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderList();
+};
+
+window.setView = (v) => {
+  currentView = v;
+  document.getElementById('table-view-wrap').style.display = v === 'table' ? 'block' : 'none';
+  document.getElementById('grid-view-wrap').style.display = v === 'grid' ? 'block' : 'none';
+  document.getElementById('view-table-btn').classList.toggle('active', v === 'table');
+  document.getElementById('view-grid-btn').classList.toggle('active', v === 'grid');
+  renderList();
+};
+
+function getFiltered() {
+  const q = document.getElementById('search-input').value.toLowerCase();
+  let list = clients;
+  if (currentTypeFilter !== 'all') list = list.filter(c => c.type === currentTypeFilter);
+  if (q) list = list.filter(c => (c.name||'').toLowerCase().includes(q) || (c.email||'').toLowerCase().includes(q));
+  return list;
+}
+
+function initials(name) {
+  return (name||'?').split(' ').map(w => w[0]).join('').substring(0,2).toUpperCase();
+}
+
+function avatarHTML(c, size=32) {
+  if (c.avatar) return `<div class="avatar" style="width:${size}px;height:${size}px"><img src="${c.avatar}" alt="${c.name}"/></div>`;
+  return `<div class="avatar" style="width:${size}px;height:${size}px;font-size:${size===32?12:16}px">${initials(c.name)}</div>`;
+}
+
+function renderList() {
+  const filtered = getFiltered();
+  if (currentView === 'table') renderTable(filtered);
+  else renderGrid(filtered);
+}
+
+function renderTable(filtered) {
+  const tbody = document.getElementById('client-tbody');
+  if (!filtered.length) {
+    tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state">No clients yet — add your first client above.</div></td></tr>`;
+    return;
+  }
+  tbody.innerHTML = filtered.map(c => {
+    const col = TYPE_COLORS[c.type] || { bg:'#1e2428', color:'#7a9898' };
+    const lastComm = (c.comms||[]).sort((a,b) => b.date.localeCompare(a.date))[0];
+    return `<tr onclick="openProfile('${c.id}')">
+      <td>${avatarHTML(c)}</td>
+      <td style="font-weight:500;color:var(--text)">${c.name||'—'}</td>
+      <td><span class="type-pill" style="background:${col.bg};color:${col.color}">${c.type||'—'}</span></td>
+      <td>${c.email||'—'}</td>
+      <td>${c.phone||'—'}</td>
+      <td style="font-family:var(--mono);font-size:11px">${lastComm ? lastComm.date : '—'}</td>
+      <td>${(c.pieces||[]).length}</td>
+      <td onclick="event.stopPropagation()">
+        <button class="btn btn-sm" onclick="openEditClient('${c.id}')">edit</button>
+        <button class="btn btn-sm btn-danger" onclick="deleteClient('${c.id}')">×</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function renderGrid(filtered) {
+  const wrap = document.getElementById('client-grid-wrap');
+  if (!filtered.length) {
+    wrap.innerHTML = `<div class="empty-state">No clients yet — add your first client above.</div>`;
+    return;
+  }
+  wrap.innerHTML = filtered.map(c => {
+    const col = TYPE_COLORS[c.type] || { bg:'#1e2428', color:'#7a9898' };
+    const pCount = (c.pieces||[]).length;
+    const lastComm = (c.comms||[]).sort((a,b) => b.date.localeCompare(a.date))[0];
+    return `<div class="client-card" onclick="openProfile('${c.id}')">
+      <div class="client-card-avatar">${c.avatar ? `<img src="${c.avatar}" alt="${c.name}"/>` : initials(c.name)}</div>
+      <div class="client-card-name">${(c.name||'').toLowerCase()}</div>
+      <div class="client-card-type"><span class="type-pill" style="background:${col.bg};color:${col.color}">${c.type||'—'}</span></div>
+      <div class="client-card-meta">${pCount} piece${pCount!==1?'s':''} · ${lastComm ? 'last: '+lastComm.date : 'no contact logged'}</div>
+    </div>`;
+  }).join('');
+}
+
+// ── Profile ───────────────────────────────────────────────────────────────────
+window.openProfile = (id) => {
+  currentClientId = id;
+  document.getElementById('list-view').style.display = 'none';
+  document.getElementById('profile-view').classList.add('active');
+  renderProfile(id);
+  document.querySelectorAll('.profile-tab').forEach((t,i) => t.classList.toggle('active', i===0));
+  document.querySelectorAll('.profile-tab-content').forEach((t,i) => t.classList.toggle('active', i===0));
+};
+
+function renderProfile(id) {
+  const c = clients.find(x => x.id === id);
+  if (!c) return;
+
+  // Header
+  const col = TYPE_COLORS[c.type] || { bg:'#1e2428', color:'#7a9898' };
+  const totalSpend = (c.pieces||[]).reduce((s,p) => s + (Number(p.price)||0), 0);
+  document.getElementById('profile-header').innerHTML = `
+    <div class="profile-avatar" onclick="triggerAvatarUpload('${c.id}')" title="Click to change photo">
+      ${c.avatar ? `<img src="${c.avatar}" alt="${c.name}"/>` : initials(c.name)}
+    </div>
+    <div class="profile-info">
+      <div class="profile-name">${(c.name||'').toLowerCase()}</div>
+      <div class="profile-type"><span class="type-pill" style="background:${col.bg};color:${col.color}">${c.type||'—'}</span></div>
+      <div class="profile-meta">
+        ${c.email ? `<div class="profile-meta-item">email <span>${c.email}</span></div>` : ''}
+        ${c.phone ? `<div class="profile-meta-item">phone <span>${c.phone}</span></div>` : ''}
+        ${c.instagram ? `<div class="profile-meta-item">instagram <span>${c.instagram}</span></div>` : ''}
+        <div class="profile-meta-item">pieces <span>${(c.pieces||[]).length}</span></div>
+        <div class="profile-meta-item">total <span>$${totalSpend.toLocaleString()}</span></div>
+      </div>
+    </div>
+    <div class="profile-actions">
+      <button class="btn btn-sm" onclick="backToList()">← all clients</button>
+      <button class="btn btn-sm btn-primary" onclick="openEditClient('${c.id}')">edit</button>
+    </div>`;
+
+  renderOverviewTab(c);
+  renderPiecesTab(c);
+  renderCommsTab(c);
+}
+
+function renderOverviewTab(c) {
+  const el = document.getElementById('ptab-overview');
+  el.innerHTML = `
+    <div class="overview-grid">
+      <div class="detail-card">
+        <div class="detail-card-title">Contact</div>
+        ${c.email ? `<div class="detail-row"><span class="detail-key">email</span><span class="detail-val">${c.email}</span></div>` : ''}
+        ${c.phone ? `<div class="detail-row"><span class="detail-key">phone</span><span class="detail-val">${c.phone}</span></div>` : ''}
+        ${c.instagram ? `<div class="detail-row"><span class="detail-key">instagram</span><span class="detail-val">${c.instagram}</span></div>` : ''}
+        ${c.birthday ? `<div class="detail-row"><span class="detail-key">birthday</span><span class="detail-val">${c.birthday}</span></div>` : ''}
+      </div>
+      <div class="detail-card">
+        <div class="detail-card-title">Address</div>
+        ${c.address ? `<div class="detail-row"><span class="detail-key">street</span><span class="detail-val">${c.address}</span></div>` : ''}
+        ${c.city ? `<div class="detail-row"><span class="detail-key">city</span><span class="detail-val">${c.city}</span></div>` : ''}
+        ${c.state_zip ? `<div class="detail-row"><span class="detail-key">state/zip</span><span class="detail-val">${c.state_zip}</span></div>` : ''}
+      </div>
+    </div>
+    ${c.style_prefs ? `<div class="notes-block"><div class="notes-block-title">Style preferences</div><div class="notes-text">${c.style_prefs}</div></div>` : ''}
+    ${c.notes ? `<div class="notes-block"><div class="notes-block-title">Notes</div><div class="notes-text">${c.notes}</div></div>` : ''}`;
+}
+
+function renderPiecesTab(c) {
+  const el = document.getElementById('ptab-pieces');
+  const pieces = c.pieces || [];
+  el.innerHTML = `
+    <div class="pieces-grid">
+      ${pieces.map((p, i) => `
+        <div class="piece-card">
+          <div class="piece-img" onclick="openLightboxImg('${c.id}',${i})">
+            ${p.image_data ? `<img src="${p.image_data}" alt="${p.title}"/>` : 'no photo'}
+          </div>
+          <div class="piece-info">
+            <div class="piece-title">${p.title||'untitled'}</div>
+            <div class="piece-meta">${p.medium||''}${p.size ? ' · '+p.size : ''}${p.date ? ' · '+p.date : ''}</div>
+            ${p.price ? `<div class="piece-price">$${Number(p.price).toLocaleString()}</div>` : ''}
+            ${p.notes ? `<div class="piece-meta" style="margin-top:4px;font-style:italic">${p.notes}</div>` : ''}
+          </div>
+        </div>`).join('')}
+      <div class="add-piece-btn" onclick="openAddPiece('${c.id}')">
+        <span style="font-size:24px;opacity:0.4">+</span>
+        <span>add piece</span>
+      </div>
+    </div>`;
+}
+
+function renderCommsTab(c) {
+  const el = document.getElementById('ptab-comms');
+  const comms = [...(c.comms||[])].sort((a,b) => b.date.localeCompare(a.date));
+  el.innerHTML = `
+    <div class="add-comm-form" style="margin-bottom:1.25rem">
+      <div class="add-comm-title">log a contact</div>
+      <div class="comm-form-row">
+        <div class="field"><label>Method</label>
+          <select id="comm-method">
+            <option value="Email">Email</option>
+            <option value="Phone / text">Phone / text</option>
+            <option value="Instagram DM">Instagram DM</option>
+            <option value="In person">In person</option>
+            <option value="Through a gallery">Through a gallery</option>
+            <option value="Through a designer">Through a designer</option>
+          </select>
+        </div>
+        <div class="field"><label>Date</label><input type="date" id="comm-date" value="${new Date().toISOString().split('T')[0]}"/></div>
+      </div>
+      <div class="field" style="margin-bottom:10px"><label>Note</label><textarea id="comm-note" placeholder="What was discussed…" style="min-height:60px"></textarea></div>
+      <button class="btn btn-primary btn-sm" onclick="saveComm('${c.id}')">save note</button>
+    </div>
+    <div class="comm-log">
+      ${comms.length ? comms.map(comm => {
+        const methodClass = comm.method.toLowerCase().replace(/[^a-z]/g,'').replace('phontext','phone').replace('instagramdm','instagram').replace('throughagallery','gallery').replace('throughadesigner','designer').replace('inperson','inperson');
+        return `<div class="comm-item">
+          <span class="comm-method comm-${methodClass}">${comm.method}</span>
+          <div class="comm-body">
+            <div class="comm-note">${comm.note||'—'}</div>
+            <div class="comm-date">${comm.date}</div>
+          </div>
+        </div>`;
+      }).join('') : '<div class="empty-state" style="padding:1.5rem">No contact logged yet.</div>'}
+    </div>`;
+}
+
+window.switchProfileTab = (tab, btn) => {
+  document.querySelectorAll('.profile-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.profile-tab-content').forEach(el => el.classList.remove('active'));
+  document.getElementById('ptab-' + tab).classList.add('active');
+};
+
+window.backToList = () => {
+  currentClientId = null;
+  document.getElementById('list-view').style.display = 'block';
+  document.getElementById('profile-view').classList.remove('active');
+};
+
+// ── Add/Edit client ───────────────────────────────────────────────────────────
+window.openAddClient = () => {
+  editingClientId = null;
+  document.getElementById('modal-title').textContent = 'add client';
+  ['c-name','c-email','c-phone','c-instagram','c-address','c-city','c-state-zip','c-style','c-notes'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('c-type').value = '';
+  document.getElementById('c-birthday').value = '';
+  document.getElementById('client-save-btn').textContent = 'save client';
+  document.getElementById('client-modal').classList.add('open');
+};
+
+window.openEditClient = (id) => {
+  editingClientId = id;
+  const c = clients.find(x => x.id === id);
+  if (!c) return;
+  document.getElementById('modal-title').textContent = 'edit client';
+  document.getElementById('c-name').value = c.name||'';
+  document.getElementById('c-type').value = c.type||'';
+  document.getElementById('c-email').value = c.email||'';
+  document.getElementById('c-phone').value = c.phone||'';
+  document.getElementById('c-instagram').value = c.instagram||'';
+  document.getElementById('c-birthday').value = c.birthday||'';
+  document.getElementById('c-address').value = c.address||'';
+  document.getElementById('c-city').value = c.city||'';
+  document.getElementById('c-state-zip').value = c.state_zip||'';
+  document.getElementById('c-style').value = c.style_prefs||'';
+  document.getElementById('c-notes').value = c.notes||'';
+  document.getElementById('client-save-btn').textContent = 'update client';
+  document.getElementById('client-modal').classList.add('open');
+};
+
+window.saveClient = async () => {
+  const name = document.getElementById('c-name').value.trim();
+  if (!name) { showToast('Please enter a client name.'); return; }
+  const btn = document.getElementById('client-save-btn');
+  btn.textContent = 'saving…'; btn.disabled = true;
+  const data = {
+    name,
+    type:        document.getElementById('c-type').value,
+    email:       document.getElementById('c-email').value.trim(),
+    phone:       document.getElementById('c-phone').value.trim(),
+    instagram:   document.getElementById('c-instagram').value.trim(),
+    birthday:    document.getElementById('c-birthday').value,
+    address:     document.getElementById('c-address').value.trim(),
+    city:        document.getElementById('c-city').value.trim(),
+    state_zip:   document.getElementById('c-state-zip').value.trim(),
+    style_prefs: document.getElementById('c-style').value.trim(),
+    notes:       document.getElementById('c-notes').value.trim(),
+    updated_at:  new Date().toISOString(),
+  };
+  try {
+    if (editingClientId) {
+      await updateDoc(doc(db, 'clients', editingClientId), data);
+      showToast('Client updated.');
+    } else {
+      data.pieces = []; data.comms = []; data.created_at = new Date().toISOString();
+      await addDoc(collection(db, 'clients'), data);
+      showToast('Client added.');
+    }
+    closeModal('client-modal');
+  } catch(err) { console.error(err); showToast('Error saving client.'); }
+  btn.textContent = editingClientId ? 'update client' : 'save client'; btn.disabled = false;
+};
+
+window.deleteClient = async (id) => {
+  if (!confirm('Remove this client permanently?')) return;
+  try { await deleteDoc(doc(db, 'clients', id)); showToast('Client removed.'); }
+  catch(err) { console.error(err); showToast('Error.'); }
+};
+
+// ── Avatar ────────────────────────────────────────────────────────────────────
+let avatarTargetId = null;
+window.triggerAvatarUpload = (id) => { avatarTargetId = id; document.getElementById('avatar-input').click(); };
+window.handleAvatarUpload = async (e) => {
+  const file = e.target.files[0]; if (!file || !avatarTargetId) return;
+  const reader = new FileReader();
+  reader.onload = async ev => {
+    const img = new Image(); img.onload = async () => {
+      const MAX = 200; let w = img.width, h = img.height;
+      if (w > MAX || h > MAX) { if (w>h){h=Math.round(h*MAX/w);w=MAX;}else{w=Math.round(w*MAX/h);h=MAX;} }
+      const c = document.createElement('canvas'); c.width=w; c.height=h;
+      c.getContext('2d').drawImage(img,0,0,w,h);
+      const data = c.toDataURL('image/jpeg', 0.8);
+      await updateDoc(doc(db,'clients',avatarTargetId), { avatar: data });
+      showToast('Photo updated.');
+    }; img.src = ev.target.result;
+  }; reader.readAsDataURL(file);
+  e.target.value = '';
+};
+
+// ── Pieces ────────────────────────────────────────────────────────────────────
+let pieceTargetClientId = null;
+window.openAddPiece = (clientId) => {
+  pieceTargetClientId = clientId; pieceImageData = null;
+  ['p-title','p-price','p-medium','p-size','p-notes'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('p-date').value = new Date().toISOString().split('T')[0];
+  document.getElementById('piece-img-preview').innerHTML = 'click to upload photo';
+  document.getElementById('piece-modal').classList.add('open');
+};
+
+window.handlePieceImage = (e) => {
+  const file = e.target.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    const img = new Image(); img.onload = () => {
+      const MAX = 1000; let w = img.width, h = img.height;
+      if (w > MAX || h > MAX) { if (w>h){h=Math.round(h*MAX/w);w=MAX;}else{w=Math.round(w*MAX/h);h=MAX;} }
+      const can = document.createElement('canvas'); can.width=w; can.height=h;
+      can.getContext('2d').drawImage(img,0,0,w,h);
+      pieceImageData = can.toDataURL('image/jpeg', 0.8);
+      document.getElementById('piece-img-preview').innerHTML = `<img src="${pieceImageData}" style="width:100%;height:100%;object-fit:cover"/>`;
+    }; img.src = ev.target.result;
+  }; reader.readAsDataURL(file);
+  e.target.value = '';
+};
+
+window.savePiece = async () => {
+  const title = document.getElementById('p-title').value.trim();
+  if (!title) { showToast('Please enter a piece title.'); return; }
+  const piece = {
+    title,
+    price:      document.getElementById('p-price').value,
+    date:       document.getElementById('p-date').value,
+    medium:     document.getElementById('p-medium').value.trim(),
+    size:       document.getElementById('p-size').value.trim(),
+    notes:      document.getElementById('p-notes').value.trim(),
+    image_data: pieceImageData,
+    added_at:   new Date().toISOString()
+  };
+  try {
+    await updateDoc(doc(db,'clients',pieceTargetClientId), { pieces: arrayUnion(piece) });
+    showToast('Piece added.');
+    closeModal('piece-modal');
+  } catch(err) { console.error(err); showToast('Error saving piece.'); }
+};
+
+// ── Communication log ─────────────────────────────────────────────────────────
+window.saveComm = async (clientId) => {
+  const note = document.getElementById('comm-note').value.trim();
+  const date = document.getElementById('comm-date').value;
+  const method = document.getElementById('comm-method').value;
+  if (!note) { showToast('Please enter a note.'); return; }
+  const comm = { method, date, note, logged_at: new Date().toISOString() };
+  try {
+    await updateDoc(doc(db,'clients',clientId), { comms: arrayUnion(comm) });
+    document.getElementById('comm-note').value = '';
+    showToast('Contact logged.');
+  } catch(err) { console.error(err); showToast('Error logging contact.'); }
+};
+
+// ── Lightbox ──────────────────────────────────────────────────────────────────
+window.openLightboxImg = (clientId, pieceIdx) => {
+  const c = clients.find(x => x.id === clientId);
+  const p = c && (c.pieces||[])[pieceIdx];
+  if (!p || !p.image_data) return;
+  document.getElementById('lightbox-img').src = p.image_data;
+  document.getElementById('lightbox').classList.add('open');
+};
+window.closeLightbox = () => document.getElementById('lightbox').classList.remove('open');
+
+// ── Modal helpers ─────────────────────────────────────────────────────────────
+window.closeModal = id => document.getElementById(id).classList.remove('open');
+
+// ── Toast ─────────────────────────────────────────────────────────────────────
+window.showToast = msg => {
+  const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2800);
+};
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+startListener();
+</script>
+</body>
+</html>
