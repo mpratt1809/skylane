@@ -162,6 +162,23 @@ body { font-family: var(--sans); background: var(--bg); color: var(--text); min-
 /* Toast */
 .toast { position: fixed; bottom: 24px; right: 24px; background: var(--accent); color: #1a2830; font-size: 13px; font-weight: 700; padding: 10px 16px; border-radius: var(--radius-sm); opacity: 0; transform: translateY(8px); transition: all 0.25s; pointer-events: none; z-index: 999; }
 .toast.show { opacity: 1; transform: translateY(0); }
+
+  /* Export panel */
+  .export-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:200; align-items:center; justify-content:center; padding:1rem; }
+  .export-overlay.open { display:flex; }
+  .export-panel { background:var(--bg); border:1px solid var(--border); border-radius:var(--radius); width:100%; max-width:480px; overflow:hidden; }
+  .export-panel-header { display:flex; align-items:center; justify-content:space-between; padding:1.1rem 1.4rem; border-bottom:1px solid var(--border); }
+  .export-panel-title { font-family:var(--font); font-size:15px; font-weight:800; text-transform:lowercase; letter-spacing:-0.01em; }
+  .export-panel-close { background:none; border:none; color:var(--muted); font-size:20px; cursor:pointer; padding:0 4px; line-height:1; }
+  .export-panel-body { padding:1.4rem; display:flex; flex-direction:column; gap:14px; }
+  .export-panel-row { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .export-preset-row { display:flex; gap:6px; flex-wrap:wrap; }
+  .preset-btn { font-family:var(--sans); font-size:11px; padding:4px 10px; border-radius:99px; border:1px solid var(--border); background:var(--surface); color:var(--muted); cursor:pointer; transition:all 0.15s; }
+  .preset-btn:hover, .preset-btn.active { background:var(--accent-light); color:var(--accent); border-color:var(--accent); }
+  .export-format-row { display:flex; gap:6px; }
+  .format-btn { flex:1; font-family:var(--sans); font-size:12px; font-weight:500; padding:8px; border-radius:var(--radius-sm); border:1px solid var(--border); background:var(--surface); color:var(--muted); cursor:pointer; text-align:center; transition:all 0.15s; }
+  .format-btn.active { background:var(--accent); color:#1a2830; border-color:var(--accent); font-weight:700; }
+  .export-panel-footer { display:flex; gap:8px; padding:1rem 1.4rem; border-top:1px solid var(--border); justify-content:flex-end; }
 </style>
 </head>
 <body>
@@ -181,6 +198,7 @@ body { font-family: var(--sans); background: var(--bg); color: var(--text); min-
     <div class="header-actions">
       <div class="sync-label"><span class="sync-dot loading" id="sync-dot"></span><span id="sync-label">Connecting…</span></div>
       <a href="index.html" class="back-link">← hub</a>
+      <button class="btn" onclick="openExportPanel()">Export ↓</button>
       <button class="btn btn-primary" onclick="openNewInvoice()">+ new invoice</button>
     </div>
   </div>
@@ -310,6 +328,55 @@ body { font-family: var(--sans); background: var(--bg); color: var(--text); min-
         <button class="btn" onclick="closeModal()">cancel</button>
         <button class="btn btn-primary" id="inv-save-btn" onclick="saveInvoice()">save invoice</button>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- Export Panel -->
+<div class="export-overlay" id="export-overlay">
+  <div class="export-panel">
+    <div class="export-panel-header">
+      <div class="export-panel-title">export invoices</div>
+      <button class="export-panel-close" onclick="closeExportPanel()">&times;</button>
+    </div>
+    <div class="export-panel-body">
+      <div class="field">
+        <label>Quick range</label>
+        <div class="export-preset-row">
+          <button class="preset-btn active" onclick="setExportPreset('thisyear',this)">This year</button>
+          <button class="preset-btn" onclick="setExportPreset('lastyear',this)">Last year</button>
+          <button class="preset-btn" onclick="setExportPreset('q1',this)">Q1</button>
+          <button class="preset-btn" onclick="setExportPreset('q2',this)">Q2</button>
+          <button class="preset-btn" onclick="setExportPreset('q3',this)">Q3</button>
+          <button class="preset-btn" onclick="setExportPreset('q4',this)">Q4</button>
+          <button class="preset-btn" onclick="setExportPreset('custom',this)">Custom</button>
+        </div>
+      </div>
+      <div class="export-panel-row">
+        <div class="field"><label>From</label><input type="date" id="exp-from" style="width:100%"/></div>
+        <div class="field"><label>To</label><input type="date" id="exp-to" style="width:100%"/></div>
+      </div>
+      <div class="export-panel-row">
+        <div class="field"><label>Status</label>
+          <select id="exp-status" style="width:100%">
+            <option value="all">All statuses</option>
+            <option value="draft">Draft</option>
+            <option value="sent">Sent</option>
+            <option value="paid">Paid</option>
+            <option value="cancelled">Cancelled</option>
+          </select>
+        </div>
+        <div class="field"><label>Format</label>
+          <div class="export-format-row" style="margin-top:4px">
+            <button class="format-btn active" id="fmt-csv" onclick="setExportFormat('csv')">CSV</button>
+            <button class="format-btn" id="fmt-pdf" onclick="setExportFormat('pdf')">PDF</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="export-panel-footer">
+      <button class="btn" onclick="closeExportPanel()">cancel</button>
+      <button class="btn btn-primary" onclick="runExport()">download →</button>
     </div>
   </div>
 </div>
@@ -827,6 +894,151 @@ window.showToast = msg => {
 };
 
 window.addLineItem = addLineItem;
+
+// ── Export panel ──────────────────────────────────────────────────────────────
+let exportFormat = 'csv';
+
+window.openExportPanel = () => {
+  const yr = new Date().getFullYear();
+  document.getElementById('exp-from').value = yr + '-01-01';
+  document.getElementById('exp-to').value   = yr + '-12-31';
+  document.getElementById('exp-status').value = 'all';
+  exportFormat = 'csv';
+  document.querySelectorAll('.format-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('fmt-csv').classList.add('active');
+  document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+  document.querySelector('.preset-btn').classList.add('active');
+  document.getElementById('export-overlay').classList.add('open');
+};
+
+window.closeExportPanel = () => document.getElementById('export-overlay').classList.remove('open');
+
+window.setExportFormat = (fmt) => {
+  exportFormat = fmt;
+  document.querySelectorAll('.format-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('fmt-' + fmt).classList.add('active');
+};
+
+window.setExportPreset = (preset, btn) => {
+  document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  const yr = new Date().getFullYear();
+  const map = {
+    thisyear: [yr+'-01-01', yr+'-12-31'],
+    lastyear: [(yr-1)+'-01-01', (yr-1)+'-12-31'],
+    q1: [yr+'-01-01', yr+'-03-31'],
+    q2: [yr+'-04-01', yr+'-06-30'],
+    q3: [yr+'-07-01', yr+'-09-30'],
+    q4: [yr+'-10-01', yr+'-12-31'],
+  };
+  if (map[preset]) {
+    document.getElementById('exp-from').value = map[preset][0];
+    document.getElementById('exp-to').value   = map[preset][1];
+  }
+};
+
+function getExportData() {
+  const from   = document.getElementById('exp-from').value;
+  const to     = document.getElementById('exp-to').value;
+  const status = document.getElementById('exp-status').value;
+  return invoices.filter(i => {
+    if (!i.issue_date) return false;
+    if (from && i.issue_date < from) return false;
+    if (to   && i.issue_date > to)   return false;
+    if (status !== 'all' && i.status !== status) return false;
+    return true;
+  });
+}
+
+window.runExport = () => {
+  const data = getExportData();
+  if (!data.length) { showToast('No invoices match these filters.'); return; }
+  if (exportFormat === 'csv') exportCSV(data);
+  if (exportFormat === 'pdf') exportAllPDF(data);
+  closeExportPanel();
+};
+
+function exportCSV(data) {
+  const headers = ['Invoice #','Client','Type','Status','Issue date','Due date','Subtotal','Tax rate','Tax','Total','Notes'];
+  const rows = data.map(i => [
+    i.number||'', i.client||'', i.type||'', i.status||'',
+    i.issue_date||'', i.due_date||'',
+    Number(i.subtotal||0).toFixed(2),
+    Number(i.tax_rate||0).toFixed(2),
+    Number(i.tax_total||0).toFixed(2),
+    Number(i.grand_total||0).toFixed(2),
+    i.notes||''
+  ]);
+  const csv = [headers,...rows].map(r => r.map(c => '"'+String(c).replace(/"/g,'""')+'"').join(',')).join('\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+  const from = document.getElementById('exp-from').value;
+  const to   = document.getElementById('exp-to').value;
+  a.download = 'skylane_invoices_' + from + '_to_' + to + '.csv';
+  a.click();
+  showToast('CSV downloaded — ' + data.length + ' invoice' + (data.length!==1?'s':'') + '.');
+}
+
+function exportAllPDF(data) {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit:'mm', format:'a4' });
+  const W = 210, pad = 20;
+  const from = document.getElementById('exp-from').value;
+  const to   = document.getElementById('exp-to').value;
+  const totalPaid = data.filter(i=>i.status==='paid').reduce((s,i)=>s+(Number(i.grand_total)||0),0);
+  const totalOutstanding = data.filter(i=>i.status==='sent').reduce((s,i)=>s+(Number(i.grand_total)||0),0);
+
+  // Cover page
+  doc.setFillColor(45,61,56); doc.rect(0,0,W,40,'F');
+  doc.setTextColor(240,236,228); doc.setFont('helvetica','bold'); doc.setFontSize(22);
+  doc.text('skylane', pad, 18);
+  doc.setFontSize(11); doc.setFont('helvetica','normal');
+  doc.setTextColor(122,152,152);
+  doc.text('Invoice Export  ·  ' + from + ' to ' + to, pad, 28);
+  doc.text('Generated ' + new Date().toLocaleDateString('en-US'), pad, 35);
+
+  // Summary
+  let y = 56;
+  doc.setFontSize(9); doc.setTextColor(61,80,72); doc.setFont('helvetica','bold');
+  doc.text('SUMMARY', pad, y); y += 8;
+  doc.setFont('helvetica','normal'); doc.setFontSize(10); doc.setTextColor(240,236,228);
+  const summaryRows = [
+    ['Total invoices', data.length],
+    ['Total invoiced', '$' + data.reduce((s,i)=>s+(Number(i.grand_total)||0),0).toLocaleString('en-US',{minimumFractionDigits:2})],
+    ['Paid', '$' + totalPaid.toLocaleString('en-US',{minimumFractionDigits:2})],
+    ['Outstanding', '$' + totalOutstanding.toLocaleString('en-US',{minimumFractionDigits:2})],
+  ];
+  summaryRows.forEach(([label, val]) => {
+    doc.setTextColor(122,152,152); doc.text(label, pad, y);
+    doc.setTextColor(240,236,228); doc.text(String(val), 100, y);
+    y += 8;
+  });
+
+  // Invoice list table
+  y += 8;
+  doc.setFillColor(36,53,48); doc.rect(pad, y-5, W-pad*2, 9, 'F');
+  doc.setFontSize(8); doc.setFont('helvetica','bold'); doc.setTextColor(122,152,152);
+  doc.text('Invoice', pad+2, y);
+  doc.text('Client', 52, y);
+  doc.text('Date', 110, y);
+  doc.text('Status', 138, y);
+  doc.text('Total', W-pad, y, {align:'right'});
+
+  doc.setFont('helvetica','normal');
+  data.forEach((inv, idx) => {
+    y += 9;
+    if (y > 270) { doc.addPage(); y = 20; }
+    if (idx % 2 === 0) { doc.setFillColor(42,58,52); doc.rect(pad, y-5, W-pad*2, 8, 'F'); }
+    doc.setTextColor(122,154,172); doc.text(inv.number||'—', pad+2, y);
+    doc.setTextColor(240,236,228); doc.text((inv.client||'—').substring(0,28), 52, y);
+    doc.setTextColor(180,180,180); doc.text(inv.issue_date||'—', 110, y);
+    doc.text(inv.status||'—', 138, y);
+    doc.setTextColor(240,236,228); doc.text('$'+Number(inv.grand_total||0).toFixed(2), W-pad, y, {align:'right'});
+  });
+
+  doc.save('skylane_invoices_' + from + '_to_' + to + '.pdf');
+  showToast('PDF downloaded — ' + data.length + ' invoice' + (data.length!==1?'s':'') + '.');
+}
 
 // ── Init ──────────────────────────────────────────────────────────────────────
 initYearFilter();
