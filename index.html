@@ -201,46 +201,7 @@
     .widget-card.linked .card-arrow { opacity: 1; }
     .widget-card.linked:hover .card-arrow { transform: translateX(4px); }
 
-    /* ── Info strip ──────────────────────────────────────────────── */
-    .info-strip {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 5px;
-      margin-bottom: 2.5rem;
-    }
 
-    .info-block {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      padding: 1rem 1.25rem;
-    }
-
-    .info-label {
-      font-family: var(--sans);
-      font-size: 9px;
-      font-weight: 300;
-      letter-spacing: 0.2em;
-      text-transform: uppercase;
-      color: var(--faint);
-      margin-bottom: 5px;
-    }
-
-    .info-value {
-      font-family: var(--font);
-      font-size: 15px;
-      font-weight: 700;
-      text-transform: lowercase;
-      letter-spacing: -0.01em;
-      color: var(--text);
-    }
-
-    .info-sub {
-      font-family: var(--sans);
-      font-size: 10px;
-      font-weight: 300;
-      color: var(--muted);
-      margin-top: 2px;
-    }
 
     /* ── Footer ──────────────────────────────────────────────────── */
     .hub-footer {
@@ -280,7 +241,6 @@
     }
 
     .header       { animation: riseIn 0.5s ease both; }
-    .info-strip   { animation: riseIn 0.5s ease 0.08s both; }
     .section-label{ animation: riseIn 0.5s ease 0.12s both; }
     .widget-grid  { animation: riseIn 0.5s ease 0.16s both; }
     .hub-footer   { animation: riseIn 0.5s ease 0.2s both; }
@@ -307,23 +267,7 @@
     </div>
   </header>
 
-  <div class="info-strip">
-    <div class="info-block">
-      <div class="info-label">studio</div>
-      <div class="info-value">sky & meagan</div>
-      <div class="info-sub">byskylane.com</div>
-    </div>
-    <div class="info-block">
-      <div class="info-label">discipline</div>
-      <div class="info-value">mixed creative</div>
-      <div class="info-sub">art & design</div>
-    </div>
-    <div class="info-block">
-      <div class="info-label">widgets live</div>
-      <div class="info-value" id="live-count">1 of 5</div>
-      <div class="info-sub">more coming soon</div>
-    </div>
-  </div>
+
 
   <div class="section-label">tools & widgets</div>
 
@@ -388,8 +332,8 @@
   </div>
 
   <footer class="hub-footer">
-    <div class="footer-l">sky<span>lane</span></div>
-    <div class="footer-r">v1.1 &nbsp;·&nbsp; byskylane.com</div>
+    <div class="footer-l">sky<span>lane</span> &nbsp;·&nbsp; sky &amp; meagan &nbsp;·&nbsp; mixed creative &nbsp;·&nbsp; art &amp; design</div>
+    <div class="footer-r">byskylane.com</div>
   </footer>
 
 </div>
@@ -413,8 +357,7 @@
       a.className = 'card-arrow'; a.textContent = '→'; f.appendChild(a);
     }
     card.addEventListener('click', () => window.open(url, '_self'));
-    const live = document.querySelectorAll('.widget-card.linked').length;
-    document.getElementById('live-count').textContent = live + ' of 5';
+
   }
 
   // ── activate as widgets go live ───────────────────────────────
