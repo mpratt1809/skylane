@@ -377,8 +377,7 @@
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
-import { getFirestore, collection, addDoc, deleteDoc, doc, query, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
-import { getStorage, ref, uploadString, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-storage.js";
+import { getFirestore, collection, addDoc, deleteDoc, doc, query, orderBy, onSnapshot, updateDoc } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
 
 // ── Config ────────────────────────────────────────────────────────────────────
 const firebaseConfig = {
@@ -392,9 +391,8 @@ const firebaseConfig = {
 const WORKER_URL = "https://skylane-api.mpratt1809.workers.dev";
 // ─────────────────────────────────────────────────────────────────────────────
 
-const fbApp  = initializeApp(firebaseConfig);
-const db      = getFirestore(fbApp);
-const storage = getStorage(fbApp);
+const fbApp = initializeApp(firebaseConfig);
+const db    = getFirestore(fbApp);
 
 const CAT_COLORS = {
   'Equipment & hardware':     { bg:'#e6f1fb', color:'#185fa5', chart:'#378ADD' },
@@ -605,28 +603,35 @@ window.confirmSave = async () => {
   const btn = document.getElementById('save-btn');
   btn.textContent = 'Saving…'; btn.disabled = true;
   try {
-    // Try to upload image — but don't block save if Storage rules deny it
-    let image_url = null;
+    // Store compressed image as base64 directly in Firestore
+    // Images are compressed to ~200KB max before saving
+    let image_data = null;
     if (currentImageDataURL) {
-      try {
-        const imgRef = ref(storage, `receipts/${Date.now()}.jpg`);
-        await uploadString(imgRef, currentImageDataURL, 'data_url');
-        image_url = await getDownloadURL(imgRef);
-      } catch(imgErr) {
-        console.warn('Image upload skipped (check Firebase Storage rules):', imgErr.message);
+      // Further compress for Firestore storage (max 1MB doc limit)
+      const img2 = new Image();
+      await new Promise(res => { img2.onload = res; img2.src = currentImageDataURL; });
+      const MAX2 = 800;
+      let w2 = img2.width, h2 = img2.height;
+      if (w2 > MAX2 || h2 > MAX2) {
+        if (w2 > h2) { h2 = Math.round(h2 * MAX2 / w2); w2 = MAX2; }
+        else { w2 = Math.round(w2 * MAX2 / h2); h2 = MAX2; }
       }
+      const c2 = document.createElement('canvas');
+      c2.width = w2; c2.height = h2;
+      c2.getContext('2d').drawImage(img2, 0, 0, w2, h2);
+      image_data = c2.toDataURL('image/jpeg', 0.65);
     }
     await addDoc(collection(db, 'expenses'), {
       vendor, date, total,
       tax,
-      payment:   document.getElementById('f-payment').value,
-      spender:   document.getElementById('f-spender').value,
+      payment:    document.getElementById('f-payment').value,
+      spender:    document.getElementById('f-spender').value,
       category,
-      notes:     document.getElementById('f-notes').value.trim(),
-      recurring: document.getElementById('f-recurring').checked,
+      notes:      document.getElementById('f-notes').value.trim(),
+      recurring:  document.getElementById('f-recurring').checked,
       line_items: keptItems,
-      image_url,
-      saved_at:  new Date().toISOString()
+      image_data,
+      saved_at:   new Date().toISOString()
     });
     resetForm(); showToast('Receipt saved to SkyLane.');
     switchTab('log', document.querySelector('.nav-tab'));
@@ -653,7 +658,7 @@ window.saveManualExpense = async () => {
       notes:     document.getElementById('m-notes').value.trim(),
       recurring: document.getElementById('m-recurring').checked,
       line_items: [],
-      image_url:  null,
+      image_data: null,
       saved_at:   new Date().toISOString()
     });
     ['m-vendor','m-date','m-total','m-tax','m-notes'].forEach(id => document.getElementById(id).value = '');
@@ -713,7 +718,7 @@ function renderTable() {
     <tbody>${filtered.map(e => {
       const col = CAT_COLORS[e.category] || CAT_COLORS['Other'];
       return `<tr>
-        <td>${e.image_url ? `<img class="thumb-tiny" src="${e.image_url}" onclick="openLightbox('${e.image_url}')" alt="receipt"/>` : '<div style="width:32px"></div>'}</td>
+        <td>${e.image_data ? `<img class="thumb-tiny" src="${e.image_data}" onclick="openLightbox('${e.id}')" alt="receipt"/>` : '<div style="width:32px"></div>'}</td>
         <td>${e.vendor||'—'}${e.recurring ? ' <span class="badge badge-recurring" style="font-size:10px;padding:1px 6px;">↻</span>' : ''}</td>
         <td style="font-family:var(--mono);font-size:12px;">${e.date||'—'}</td>
         <td><span class="cat-pill" style="background:${col.bg};color:${col.color}">${e.category}</span></td>
@@ -721,17 +726,16 @@ function renderTable() {
         <td>${e.payment||'—'}</td>
         <td class="amount-cell">$${Number(e.tax||0).toFixed(2)}</td>
         <td class="amount-cell">$${Number(e.total||0).toFixed(2)}</td>
-        <td><button class="btn btn-sm" style="color:var(--red);border-color:transparent;padding:3px 8px" onclick="deleteExpense('${e.id}','${e.image_url||''}')">Remove</button></td>
+        <td><button class="btn btn-sm" style="color:var(--red);border-color:transparent;padding:3px 8px" onclick="deleteExpense('${e.id}')">Remove</button></td>
       </tr>`;
     }).join('')}</tbody>
   </table></div>`;
 }
 
-window.deleteExpense = async (id, imageUrl) => {
+window.deleteExpense = async (id) => {
   if (!confirm('Remove this expense permanently?')) return;
   try {
     await deleteDoc(doc(db, 'expenses', id));
-    if (imageUrl) { try { await deleteObject(ref(storage, imageUrl)); } catch(_){} }
     showToast('Expense removed.');
   } catch(err) { console.error(err); showToast('Error removing expense.'); }
 };
@@ -1028,12 +1032,39 @@ window.exportTaxSummary = () => {
     doc.text(`SkyLane Business Hub  ·  Tax Year ${year}  ·  Page ${i} of ${pageCount}`, 105, 290, {align:'center'});
   }
 
+  // Append receipt images page
+  const withImages = data.filter(e => e.image_data);
+  if (withImages.length) {
+    doc.addPage();
+    doc.setFontSize(13); doc.setFont('helvetica','bold');
+    doc.setTextColor(26,26,46);
+    doc.text('Receipt images', 14, 20);
+    doc.setFontSize(8); doc.setFont('helvetica','normal'); doc.setTextColor(150,150,150);
+    doc.text(`${withImages.length} receipt${withImages.length!==1?'s':''} attached`, 14, 28);
+    let iy = 36, ix = 14, imgW = 85, imgH = 60, col = 0;
+    for (const e of withImages) {
+      if (iy + imgH > 270) { doc.addPage(); iy = 20; }
+      try {
+        doc.addImage(e.image_data, 'JPEG', ix + col * (imgW + 10), iy, imgW, imgH);
+        doc.setFontSize(7); doc.setTextColor(120,120,120);
+        doc.text(`${e.vendor||''} · ${e.date||''} · $${Number(e.total||0).toFixed(2)}`, ix + col * (imgW + 10), iy + imgH + 4);
+      } catch(_) {}
+      col++;
+      if (col >= 2) { col = 0; iy += imgH + 14; }
+    }
+  }
+
   doc.save(`SkyLane_TaxSummary_${year}.pdf`);
   showToast('Tax summary downloaded.');
 };
 
 // ── Lightbox ──────────────────────────────────────────────────────────────────
-window.openLightbox  = url => { document.getElementById('lightbox-img').src = url; document.getElementById('lightbox').classList.add('open'); };
+window.openLightbox = id => {
+  const e = expenses.find(x => x.id === id);
+  if (!e || !e.image_data) return;
+  document.getElementById('lightbox-img').src = e.image_data;
+  document.getElementById('lightbox').classList.add('open');
+};
 window.closeLightbox = ()  => document.getElementById('lightbox').classList.remove('open');
 
 // ── Toast ─────────────────────────────────────────────────────────────────────
