@@ -1,0 +1,1279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>skylane — documents</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Inter:wght@300;400;500&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #2d3d38;
+      --surface:   #243530;
+      --surface2:  #1e2e2a;
+      --border:    #3a4d48;
+      --text:      #f0ece4;
+      --muted:     #5a7068;
+      --faint:     #3d5048;
+      --accent:    #a0b898;
+      --accent-dim:#6a8878;
+      --font:      'Syne', sans-serif;
+      --sans:      'Inter', sans-serif;
+
+      /* status colours */
+      --s-draft:   #7a9080;
+      --s-review:  #c4a84a;
+      --s-signed:  #6ab87a;
+      --s-required:#e07050;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: var(--sans);
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    .page {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 3.5rem 2rem 6rem;
+    }
+
+    /* ── Header ─────────────────────────────────────────────────── */
+    .header {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      padding-bottom: 2rem;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 2.5rem;
+      gap: 1rem;
+      flex-wrap: wrap;
+      animation: riseIn 0.5s ease both;
+    }
+
+    .header-left { display: flex; align-items: flex-end; gap: 1.5rem; }
+
+    .back-btn {
+      font-family: var(--sans);
+      font-size: 11px;
+      font-weight: 400;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+      cursor: pointer;
+      text-decoration: none;
+      transition: color 0.2s;
+      padding-bottom: 4px;
+      border-bottom: 1px solid transparent;
+    }
+    .back-btn:hover { color: var(--accent); border-bottom-color: var(--accent); }
+
+    .wordmark {
+      font-family: var(--font);
+      font-size: 42px;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 0.95;
+      text-transform: lowercase;
+      color: var(--text);
+    }
+    .wordmark span { color: var(--accent); }
+
+    .header-right { text-align: right; }
+    .header-date {
+      font-family: var(--sans);
+      font-size: 11px;
+      font-weight: 300;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .header-sub {
+      font-family: var(--sans);
+      font-size: 9px;
+      font-weight: 300;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--faint);
+      margin-top: 3px;
+    }
+
+    /* ── Notice ──────────────────────────────────────────────────── */
+    .legal-notice {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--s-required);
+      padding: 1rem 1.25rem;
+      margin-bottom: 2.5rem;
+      animation: riseIn 0.5s ease 0.08s both;
+    }
+    .legal-notice p {
+      font-family: var(--sans);
+      font-size: 11px;
+      font-weight: 300;
+      color: var(--muted);
+      line-height: 1.7;
+      letter-spacing: 0.02em;
+    }
+    .legal-notice strong { color: var(--text); font-weight: 500; }
+
+    /* ── Section label ───────────────────────────────────────────── */
+    .section-label {
+      font-family: var(--sans);
+      font-size: 9px;
+      font-weight: 500;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--faint);
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      animation: riseIn 0.5s ease 0.12s both;
+    }
+    .section-label::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    /* ── Progress bar ────────────────────────────────────────────── */
+    .progress-bar {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 1.25rem 1.5rem;
+      margin-bottom: 2rem;
+      display: flex;
+      gap: 2rem;
+      flex-wrap: wrap;
+      animation: riseIn 0.5s ease 0.14s both;
+    }
+    .progress-item { display: flex; align-items: center; gap: 8px; }
+    .progress-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+    }
+    .progress-dot.required  { background: var(--s-required); }
+    .progress-dot.draft     { background: var(--s-draft); }
+    .progress-dot.review    { background: var(--s-review); }
+    .progress-dot.signed    { background: var(--s-signed); }
+    .progress-label {
+      font-family: var(--sans);
+      font-size: 10px;
+      font-weight: 400;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .progress-count {
+      font-family: var(--font);
+      font-size: 14px;
+      font-weight: 800;
+      color: var(--text);
+      margin-left: 2px;
+    }
+
+    /* ── Document list ───────────────────────────────────────────── */
+    .doc-list {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      animation: riseIn 0.5s ease 0.18s both;
+    }
+
+    /* ── Document row ────────────────────────────────────────────── */
+    .doc-row {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--border);
+      overflow: hidden;
+      transition: border-left-color 0.2s;
+    }
+    .doc-row.status-required { border-left-color: var(--s-required); }
+    .doc-row.status-draft    { border-left-color: var(--s-draft); }
+    .doc-row.status-review   { border-left-color: var(--s-review); }
+    .doc-row.status-signed   { border-left-color: var(--s-signed); }
+
+    .doc-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1.1rem 1.25rem;
+      cursor: pointer;
+      gap: 1rem;
+      transition: background 0.15s;
+      user-select: none;
+    }
+    .doc-header:hover { background: var(--surface2); }
+
+    .doc-header-left { display: flex; align-items: center; gap: 1rem; flex: 1; min-width: 0; }
+
+    .doc-num {
+      font-family: var(--sans);
+      font-size: 9px;
+      font-weight: 300;
+      letter-spacing: 0.12em;
+      color: var(--faint);
+      flex-shrink: 0;
+      width: 20px;
+    }
+
+    .doc-info { flex: 1; min-width: 0; }
+    .doc-name {
+      font-family: var(--font);
+      font-size: 15px;
+      font-weight: 800;
+      text-transform: lowercase;
+      letter-spacing: -0.01em;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .doc-subtitle {
+      font-family: var(--sans);
+      font-size: 10px;
+      font-weight: 300;
+      color: var(--muted);
+      letter-spacing: 0.02em;
+      margin-top: 2px;
+    }
+
+    .doc-header-right {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      flex-shrink: 0;
+    }
+
+    .doc-status {
+      font-family: var(--sans);
+      font-size: 9px;
+      font-weight: 500;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      padding: 3px 8px;
+      border-radius: 2px;
+    }
+    .doc-status.required { color: var(--s-required); background: rgba(224,112,80,0.1); }
+    .doc-status.draft    { color: var(--s-draft);    background: rgba(122,144,128,0.1); }
+    .doc-status.review   { color: var(--s-review);   background: rgba(196,168,74,0.1); }
+    .doc-status.signed   { color: var(--s-signed);   background: rgba(106,184,122,0.1); }
+
+    /* status selector */
+    .status-select {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-family: var(--sans);
+      font-size: 9px;
+      font-weight: 500;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 3px 6px;
+      cursor: pointer;
+      outline: none;
+    }
+    .status-select option { background: var(--surface2); color: var(--text); }
+
+    .doc-chevron {
+      font-size: 10px;
+      color: var(--muted);
+      transition: transform 0.25s;
+    }
+    .doc-row.open .doc-chevron { transform: rotate(90deg); }
+
+    /* ── Expanded panel ──────────────────────────────────────────── */
+    .doc-panel {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.35s ease;
+    }
+    .doc-row.open .doc-panel { max-height: 9000px; }
+
+    .doc-panel-inner {
+      border-top: 1px solid var(--border);
+      padding: 1.5rem 1.25rem 1.5rem 1.25rem;
+    }
+
+    /* tabs */
+    .panel-tabs {
+      display: flex;
+      gap: 0;
+      margin-bottom: 1.5rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .panel-tab {
+      font-family: var(--sans);
+      font-size: 10px;
+      font-weight: 500;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--muted);
+      padding: 0.5rem 1rem 0.6rem;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -1px;
+      transition: color 0.15s, border-color 0.15s;
+    }
+    .panel-tab:hover { color: var(--text); }
+    .panel-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+    .tab-pane { display: none; }
+    .tab-pane.active { display: block; }
+
+    /* ── Document viewer ─────────────────────────────────────────── */
+    .doc-viewer {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      padding: 2rem 2.5rem;
+      font-family: 'Georgia', serif;
+      font-size: 13px;
+      line-height: 1.8;
+      color: #d4d0c8;
+      max-height: 520px;
+      overflow-y: auto;
+    }
+    .doc-viewer::-webkit-scrollbar { width: 4px; }
+    .doc-viewer::-webkit-scrollbar-track { background: var(--surface2); }
+    .doc-viewer::-webkit-scrollbar-thumb { background: var(--border); }
+
+    .doc-viewer h1 {
+      font-family: var(--font);
+      font-size: 18px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text);
+      text-align: center;
+      margin-bottom: 0.5rem;
+    }
+    .doc-viewer h2 {
+      font-family: var(--font);
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--accent);
+      margin: 1.75rem 0 0.6rem;
+      padding-bottom: 4px;
+      border-bottom: 1px solid var(--border);
+    }
+    .doc-viewer .doc-center { text-align: center; color: var(--muted); font-style: italic; margin-bottom: 1.5rem; }
+    .doc-viewer .doc-placeholder {
+      background: rgba(160,184,152,0.08);
+      border: 1px solid var(--accent-dim);
+      color: var(--accent);
+      padding: 1px 6px;
+      border-radius: 2px;
+      font-family: var(--sans);
+      font-size: 11px;
+      font-style: normal;
+      cursor: pointer;
+    }
+    .doc-viewer .doc-placeholder:hover { background: rgba(160,184,152,0.15); }
+    .doc-viewer p { margin-bottom: 0.75rem; }
+    .doc-viewer .doc-section-num { font-weight: bold; color: var(--text); }
+    .doc-viewer .doc-notice {
+      background: rgba(224,112,80,0.08);
+      border-left: 3px solid var(--s-required);
+      padding: 0.75rem 1rem;
+      margin: 1rem 0;
+      font-family: var(--sans);
+      font-size: 11px;
+      color: var(--muted);
+      font-style: italic;
+    }
+
+    /* ── Fill-in form ────────────────────────────────────────────── */
+    .fill-form {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+    .fill-group {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+    .fill-group.full { grid-column: 1 / -1; }
+    .fill-label {
+      font-family: var(--sans);
+      font-size: 9px;
+      font-weight: 500;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .fill-input, .fill-select, .fill-textarea {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-family: var(--sans);
+      font-size: 13px;
+      font-weight: 300;
+      padding: 0.6rem 0.75rem;
+      outline: none;
+      transition: border-color 0.15s;
+      width: 100%;
+    }
+    .fill-input:focus, .fill-select:focus, .fill-textarea:focus {
+      border-color: var(--accent);
+    }
+    .fill-textarea { resize: vertical; min-height: 80px; }
+    .fill-select option { background: var(--surface2); }
+
+    .fill-actions {
+      grid-column: 1 / -1;
+      display: flex;
+      gap: 0.75rem;
+      margin-top: 0.5rem;
+      flex-wrap: wrap;
+    }
+    .btn {
+      font-family: var(--sans);
+      font-size: 10px;
+      font-weight: 500;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      padding: 0.6rem 1.2rem;
+      cursor: pointer;
+      border: 1px solid var(--border);
+      transition: background 0.15s, border-color 0.15s, color 0.15s;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .btn-primary {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: var(--surface);
+    }
+    .btn-primary:hover { background: #b8ceb0; border-color: #b8ceb0; }
+    .btn-ghost {
+      background: transparent;
+      color: var(--muted);
+    }
+    .btn-ghost:hover { background: var(--surface2); color: var(--text); border-color: var(--accent-dim); }
+    .btn-gdocs {
+      background: transparent;
+      border-color: var(--s-review);
+      color: var(--s-review);
+    }
+    .btn-gdocs:hover { background: rgba(196,168,74,0.08); }
+
+    /* ── Footer ──────────────────────────────────────────────────── */
+    .hub-footer {
+      border-top: 1px solid var(--border);
+      padding-top: 1.25rem;
+      margin-top: 3rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      animation: riseIn 0.5s ease 0.22s both;
+    }
+    .footer-l {
+      font-family: var(--font);
+      font-size: 13px;
+      font-weight: 700;
+      text-transform: lowercase;
+      letter-spacing: -0.01em;
+      color: var(--faint);
+    }
+    .footer-l span { color: var(--accent); }
+    .footer-r {
+      font-family: var(--sans);
+      font-size: 9px;
+      font-weight: 300;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--faint);
+    }
+
+    @keyframes riseIn {
+      from { opacity: 0; transform: translateY(12px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (max-width: 640px) {
+      .page { padding: 2rem 1.25rem 4rem; }
+      .wordmark { font-size: 32px; }
+      .header { flex-direction: column; align-items: flex-start; }
+      .header-right { text-align: left; }
+      .fill-form { grid-template-columns: 1fr; }
+      .fill-group.full { grid-column: 1; }
+      .doc-header { flex-wrap: wrap; }
+      .doc-viewer { padding: 1.25rem; }
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <!-- ── Header ── -->
+  <header class="header">
+    <div class="header-left">
+      <a class="back-btn" href="index.html">← hub</a>
+      <div class="wordmark">sky<span>lane</span></div>
+    </div>
+    <div class="header-right">
+      <div class="header-date" id="today-date"></div>
+      <div class="header-sub">documents &amp; agreements</div>
+    </div>
+  </header>
+
+  <!-- ── Legal notice ── -->
+  <div class="legal-notice">
+    <p><strong>Draft templates only.</strong> These documents were generated as starting-point drafts and do not constitute legal advice. Before signing any agreement, both members should have documents reviewed by a licensed Texas attorney. Fields marked in <span style="color:var(--accent)">green</span> need to be completed with your specific information.</p>
+  </div>
+
+  <!-- ── Progress summary ── -->
+  <div class="section-label">document status</div>
+  <div class="progress-bar" id="progress-bar">
+    <div class="progress-item">
+      <div class="progress-dot required"></div>
+      <span class="progress-label">needs filing</span>
+      <span class="progress-count" id="cnt-required">0</span>
+    </div>
+    <div class="progress-item">
+      <div class="progress-dot draft"></div>
+      <span class="progress-label">draft</span>
+      <span class="progress-count" id="cnt-draft">0</span>
+    </div>
+    <div class="progress-item">
+      <div class="progress-dot review"></div>
+      <span class="progress-label">in review</span>
+      <span class="progress-count" id="cnt-review">0</span>
+    </div>
+    <div class="progress-item">
+      <div class="progress-dot signed"></div>
+      <span class="progress-label">signed</span>
+      <span class="progress-count" id="cnt-signed">0</span>
+    </div>
+  </div>
+
+  <!-- ── Document list ── -->
+  <div class="section-label">all documents</div>
+  <div class="doc-list" id="doc-list"></div>
+
+  <!-- ── Footer ── -->
+  <footer class="hub-footer">
+    <div class="footer-l">sky<span>lane</span> &nbsp;·&nbsp; sky &amp; meagan &nbsp;·&nbsp; mixed creative &nbsp;·&nbsp; art &amp; design</div>
+    <div class="footer-r">byskylane.com</div>
+  </footer>
+
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════════════
+// DOCUMENT DATA
+// ══════════════════════════════════════════════════════════════
+const DOCS = [
+  {
+    id: 'cert-formation',
+    num: '01',
+    name: 'certificate of formation',
+    subtitle: 'Texas Secretary of State filing — legally creates the LLC',
+    priority: 'File first — LLC does not exist without this',
+    defaultStatus: 'required',
+    fields: [
+      { key: 'llcName',    label: 'LLC Name',              placeholder: 'e.g. Skylane Creative LLC' },
+      { key: 'regAgent',   label: 'Registered Agent Name', placeholder: 'Full legal name' },
+      { key: 'regAddress', label: 'Registered Agent Address', placeholder: 'Street address, Austin TX ZIP' },
+      { key: 'filingDate', label: 'Filing Date',           placeholder: 'e.g. April 15, 2026', type:'date' },
+    ],
+    gdocsNote: 'File online at sos.state.tx.us — $300 fee. No Google Doc needed; use the SOS online form.',
+    gdocsUrl: 'https://www.sos.state.tx.us/corp/forms_option.shtml',
+    gdocsLabel: 'Texas SOS Filing Portal →',
+    content: (f) => `
+      <h1>Certificate of Formation</h1>
+      <p class="doc-center">Texas Limited Liability Company<br>Filed with the Texas Secretary of State</p>
+      <div class="doc-notice">This document must be filed with the Texas Secretary of State at sos.state.tx.us. Filing fee: $300. The LLC does not legally exist until this is approved.</div>
+      <h2>Article 1 — Entity Name</h2>
+      <p>The filing entity name is: <span class="doc-placeholder">${f.llcName||'[ LLC NAME ]'}</span>, a Texas limited liability company.</p>
+      <h2>Article 2 — Registered Agent</h2>
+      <p>The registered agent is <span class="doc-placeholder">${f.regAgent||'[ REGISTERED AGENT NAME ]'}</span>, whose registered office address is <span class="doc-placeholder">${f.regAddress||'[ STREET ADDRESS, AUSTIN TX ZIP ]'}</span>.</p>
+      <h2>Article 3 — Organizers</h2>
+      <p>The organizers of this LLC are Meagan Pratt and Sky [Last Name], both residents of Austin, Texas.</p>
+      <h2>Article 4 — Management</h2>
+      <p>The company will be managed by its members.</p>
+      <h2>Article 5 — Purpose</h2>
+      <p>The purpose of this LLC is the creation and sale of original artwork, social media content creation and monetization, and any other lawful business activity.</p>
+    `
+  },
+  {
+    id: 'ein',
+    num: '02',
+    name: 'EIN application',
+    subtitle: 'IRS Employer Identification Number — free, required to open bank account',
+    priority: 'Apply immediately after SOS approval',
+    defaultStatus: 'required',
+    fields: [
+      { key: 'llcName',  label: 'LLC Name',       placeholder: 'Legal LLC name as filed' },
+      { key: 'einDate',  label: 'Application Date', placeholder: 'Date you applied', type:'date' },
+      { key: 'einNum',   label: 'EIN Number (once received)', placeholder: 'XX-XXXXXXX' },
+    ],
+    gdocsNote: 'Apply free at irs.gov/businesses/small-businesses-self-employed/apply-for-an-employer-identification-number-ein-online — takes 10 minutes, instant approval.',
+    gdocsUrl: 'https://www.irs.gov/businesses/small-businesses-self-employed/apply-for-an-employer-identification-number-ein-online',
+    gdocsLabel: 'IRS EIN Application →',
+    content: (f) => `
+      <h1>EIN Application Record</h1>
+      <p class="doc-center">Internal record — applied via IRS.gov</p>
+      <div class="doc-notice">This is an internal tracking record only. The actual EIN application is completed at IRS.gov. No document needs to be signed — save the IRS confirmation letter you receive.</div>
+      <h2>Entity Information</h2>
+      <p><span class="doc-section-num">LLC Name:</span> <span class="doc-placeholder">${f.llcName||'[ LLC NAME ]'}</span></p>
+      <p><span class="doc-section-num">Entity Type:</span> Multi-Member LLC (taxed as Partnership)</p>
+      <p><span class="doc-section-num">State of Formation:</span> Texas</p>
+      <p><span class="doc-section-num">Date Applied:</span> <span class="doc-placeholder">${f.einDate||'[ DATE ]'}</span></p>
+      <p><span class="doc-section-num">EIN Received:</span> <span class="doc-placeholder">${f.einNum||'[ XX-XXXXXXX ]'}</span></p>
+      <h2>Next Steps After Receiving EIN</h2>
+      <p>1. Open business bank account using the EIN and Certificate of Formation</p>
+      <p>2. Sign Operating Agreement and Member Loan Agreement</p>
+      <p>3. Register for Texas Sales Tax Permit at comptroller.texas.gov</p>
+    `
+  },
+  {
+    id: 'operating-agreement',
+    num: '03',
+    name: 'operating agreement',
+    subtitle: '50/50 member-managed Texas LLC — governs how the business runs',
+    priority: 'Sign alongside Certificate of Formation',
+    defaultStatus: 'draft',
+    fields: [
+      { key: 'llcName',    label: 'LLC Name',             placeholder: 'e.g. Skylane Creative LLC' },
+      { key: 'skyLast',    label: "Sky's Last Name",       placeholder: 'Legal last name' },
+      { key: 'address',    label: 'Principal Office Address', placeholder: 'Austin TX street address' },
+      { key: 'regAgent',   label: 'Registered Agent',      placeholder: 'Name and address' },
+      { key: 'signDate',   label: 'Agreement Date',        placeholder: 'e.g. April 15, 2026', type:'date' },
+      { key: 'threshold',  label: 'Unanimous Consent Threshold', placeholder: 'e.g. $500 or $1,000' },
+      { key: 'loanAmt',    label: "Meagan's Loan Amount",  placeholder: 'e.g. $1,500' },
+    ],
+    gdocsUrl: 'https://docs.google.com/document/create',
+    gdocsLabel: 'Open in Google Docs →',
+    gdocsNote: 'Click to open a new Google Doc, then paste the document content for shared editing with Sky.',
+    content: (f) => `
+      <h1>Operating Agreement</h1>
+      <p class="doc-center">of <span class="doc-placeholder">${f.llcName||'[ LLC NAME ]'}</span>, LLC<br>A Texas Limited Liability Company</p>
+      <p class="doc-center" style="margin-top:8px;">Effective <span class="doc-placeholder">${f.signDate||'[ DATE ]'}</span></p>
+      <div class="doc-notice">Draft template — review with a licensed Texas attorney before signing.</div>
+
+      <h2>Article I — Formation</h2>
+      <p><span class="doc-section-num">1.1 Name.</span> The business shall be conducted as <span class="doc-placeholder">${f.llcName||'[ LLC NAME ]'}</span>, LLC.</p>
+      <p><span class="doc-section-num">1.2 Principal Office.</span> <span class="doc-placeholder">${f.address||'[ ADDRESS, AUSTIN TX ]'}</span></p>
+      <p><span class="doc-section-num">1.3 Registered Agent.</span> <span class="doc-placeholder">${f.regAgent||'[ REGISTERED AGENT ]'}</span></p>
+      <p><span class="doc-section-num">1.4 Term.</span> The Company commences upon filing of the Certificate of Formation and continues perpetually unless dissolved.</p>
+
+      <h2>Article II — Purpose</h2>
+      <p>The Company is formed to engage in the creation, sale, and licensing of original artwork; social media content creation and monetization; and any other lawful business activity the Members determine.</p>
+
+      <h2>Article III — Members & Ownership</h2>
+      <p><span class="doc-section-num">3.1 Members.</span> Meagan Pratt (50%) and Sky <span class="doc-placeholder">${f.skyLast||'[ LAST NAME ]'}</span> (50%).</p>
+      <p><span class="doc-section-num">3.2 Voting.</span> Each Member holds 50% of voting rights. Routine decisions require majority; major decisions (see 4.2) require unanimous written consent.</p>
+      <p><span class="doc-section-num">3.3 Member Loans.</span> Meagan Pratt has advanced approximately <span class="doc-placeholder">${f.loanAmt||'[ $ AMOUNT ]'}</span> as a Member Loan, documented separately. Member Loans are repaid before profit distributions.</p>
+
+      <h2>Article IV — Management</h2>
+      <p><span class="doc-section-num">4.1</span> The Company is member-managed. Both Members have equal authority over day-to-day operations.</p>
+      <p><span class="doc-section-num">4.2 Unanimous Consent Required for:</span> amending this Agreement; admitting new Members; dissolution; sale of substantially all assets; any single unbudgeted expenditure over <span class="doc-placeholder">${f.threshold||'[ $ THRESHOLD ]'}</span>; taking on debt; contracts exceeding one year.</p>
+      <p><span class="doc-section-num">4.3 Deadlock.</span> Disputes go to 30-day negotiation, then mediation with shared costs.</p>
+
+      <h2>Article V — Distributions</h2>
+      <p><span class="doc-section-num">5.1</span> Profits and losses allocated 50/50.</p>
+      <p><span class="doc-section-num">5.2 Distribution Priority:</span> (a) Repayment of Member Loans; (b) Operating reserves; (c) Remaining cash 50/50 to Members.</p>
+
+      <h2>Article VI — Banking</h2>
+      <p>The Company maintains dedicated business bank accounts. No commingling of personal and business funds. Business expenses paid personally are reimbursed upon submission of receipts with documented business purpose.</p>
+
+      <h2>Article VII — Intellectual Property</h2>
+      <p>All artwork, content, brand assets, and creative work produced in the course of Company business belongs to the Company. Pre-existing IP of Sky <span class="doc-placeholder">${f.skyLast||'[ LAST NAME ]'}</span> remains personal property unless separately contributed in writing.</p>
+
+      <h2>Article VIII — Transfer Restrictions</h2>
+      <p>No Member may transfer their interest without written consent of the other Member. Right of first refusal applies to any proposed third-party transfer (30-day exercise window).</p>
+
+      <h2>Article IX — Dissolution</h2>
+      <p>Dissolution requires unanimous written consent. On dissolution: debts paid first, then Member Loans, then remaining assets 50/50. Either Member may buy out the other at fair market value.</p>
+
+      <h2>Article X — Governing Law</h2>
+      <p>Governed by the laws of the State of Texas. Entire agreement. Amendments require unanimous written consent.</p>
+
+      <br><p style="border-top:1px solid var(--border);padding-top:1rem;font-style:italic;">Meagan Pratt ___________________________ Date ___________</p>
+      <p style="margin-top:0.75rem;font-style:italic;">Sky <span class="doc-placeholder">${f.skyLast||'[ LAST NAME ]'}</span> ___________________________ Date ___________</p>
+    `
+  },
+  {
+    id: 'member-loan',
+    num: '04',
+    name: 'member loan agreement',
+    subtitle: 'Documents Meagan\'s advances as LLC loans — repaid before profit distributions',
+    priority: 'Sign alongside Operating Agreement',
+    defaultStatus: 'draft',
+    fields: [
+      { key: 'llcName',   label: 'LLC Name',              placeholder: 'Legal LLC name' },
+      { key: 'skyLast',   label: "Sky's Last Name",        placeholder: 'Legal last name' },
+      { key: 'signDate',  label: 'Agreement Date',         placeholder: 'e.g. April 15, 2026', type:'date' },
+      { key: 'totalLoan', label: 'Total Loan Amount',      placeholder: 'e.g. $1,247.00' },
+      { key: 'interestRate', label: 'Interest Rate',       placeholder: 'e.g. 0% (recommended for simplicity)' },
+    ],
+    gdocsUrl: 'https://docs.google.com/document/create',
+    gdocsLabel: 'Open in Google Docs →',
+    gdocsNote: 'Open a new Google Doc to collaborate with Sky on filling in the loan schedule.',
+    content: (f) => `
+      <h1>Member Loan Agreement</h1>
+      <p class="doc-center"><span class="doc-placeholder">${f.llcName||'[ LLC NAME ]'}</span>, LLC<br>Effective <span class="doc-placeholder">${f.signDate||'[ DATE ]'}</span></p>
+      <div class="doc-notice">Draft template — not legal advice. Review with a Texas attorney before signing.</div>
+
+      <h2>Parties</h2>
+      <p><span class="doc-section-num">Lender:</span> Meagan Pratt, Member</p>
+      <p><span class="doc-section-num">Borrower:</span> <span class="doc-placeholder">${f.llcName||'[ LLC NAME ]'}</span>, LLC</p>
+      <p><span class="doc-section-num">Acknowledged by:</span> Sky <span class="doc-placeholder">${f.skyLast||'[ LAST NAME ]'}</span>, Member</p>
+
+      <h2>Background</h2>
+      <p>Prior to and following formation of the Company, Meagan Pratt has advanced funds on behalf of the Company for legitimate business expenses. The parties wish to memorialize these as formal loans establishing the Company's obligation to repay Meagan before profits are distributed.</p>
+
+      <h2>Loan Amount</h2>
+      <p>Total outstanding loan: <span class="doc-placeholder">${f.totalLoan||'[ $ TOTAL ]'}</span> (see Expense Schedule below). Interest rate: <span class="doc-placeholder">${f.interestRate||'[ 0% ]'}</span> per annum.</p>
+
+      <h2>Expense Schedule</h2>
+      <p style="font-family:var(--sans);font-size:11px;color:var(--muted);">Complete this table with each business expense paid personally by Meagan. Attach receipts.</p>
+      <table style="width:100%;border-collapse:collapse;font-family:var(--sans);font-size:11px;margin-top:0.5rem;">
+        <thead>
+          <tr style="background:rgba(160,184,152,0.08);">
+            <th style="padding:6px 8px;border:1px solid var(--border);text-align:left;color:var(--accent);font-weight:500;">Date</th>
+            <th style="padding:6px 8px;border:1px solid var(--border);text-align:left;color:var(--accent);font-weight:500;">Description</th>
+            <th style="padding:6px 8px;border:1px solid var(--border);text-align:left;color:var(--accent);font-weight:500;">Vendor</th>
+            <th style="padding:6px 8px;border:1px solid var(--border);text-align:left;color:var(--accent);font-weight:500;">Amount</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${[1,2,3,4,5,6,7,8].map(n=>`<tr><td style="padding:6px 8px;border:1px solid var(--border);color:var(--muted);"></td><td style="padding:6px 8px;border:1px solid var(--border);"></td><td style="padding:6px 8px;border:1px solid var(--border);"></td><td style="padding:6px 8px;border:1px solid var(--border);"></td></tr>`).join('')}
+          <tr style="background:rgba(160,184,152,0.06);">
+            <td colspan="3" style="padding:6px 8px;border:1px solid var(--border);color:var(--text);font-weight:500;">TOTAL</td>
+            <td style="padding:6px 8px;border:1px solid var(--border);color:var(--accent);font-weight:600;">${f.totalLoan||'$'}</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2>Repayment Terms</h2>
+      <p>The Company shall repay this loan in full <span class="doc-section-num">before</span> making any profit distributions to either Member. Repayment is made as funds are available. Prepayment permitted without penalty. Both Members acknowledge and agree to this priority.</p>
+
+      <br><p style="border-top:1px solid var(--border);padding-top:1rem;font-style:italic;">Meagan Pratt (Lender) ___________________________ Date ___________</p>
+      <p style="margin-top:0.75rem;font-style:italic;">Sky <span class="doc-placeholder">${f.skyLast||'[ LAST NAME ]'}</span> (Member) ___________________________ Date ___________</p>
+    `
+  },
+  {
+    id: 'ip-assignment',
+    num: '05',
+    name: 'IP assignment agreement',
+    subtitle: 'Transfers pre-existing artwork & brand assets from Sky to the LLC',
+    priority: 'Sign before first sale',
+    defaultStatus: 'draft',
+    fields: [
+      { key: 'llcName',   label: 'LLC Name',               placeholder: 'Legal LLC name' },
+      { key: 'skyLast',   label: "Sky's Last Name",         placeholder: 'Legal last name' },
+      { key: 'signDate',  label: 'Agreement Date',          placeholder: 'e.g. April 15, 2026', type:'date' },
+      { key: 'ipDesc',    label: 'Description of IP Being Transferred', placeholder: 'e.g. existing artwork inventory, @skylane Instagram handle, skylane brand name and logo', type:'textarea' },
+    ],
+    gdocsUrl: 'https://docs.google.com/document/create',
+    gdocsLabel: 'Open in Google Docs →',
+    gdocsNote: 'Collaborate with Sky to list all IP being transferred — be thorough, especially social media handles and existing artwork.',
+    content: (f) => `
+      <h1>Intellectual Property Assignment Agreement</h1>
+      <p class="doc-center"><span class="doc-placeholder">${f.llcName||'[ LLC NAME ]'}</span>, LLC<br>Effective <span class="doc-placeholder">${f.signDate||'[ DATE ]'}</span></p>
+      <div class="doc-notice">Draft template — review with a Texas attorney before signing, especially regarding copyright assignments.</div>
+
+      <h2>Assignment</h2>
+      <p>Sky <span class="doc-placeholder">${f.skyLast||'[ LAST NAME ]'}</span> ("Assignor") hereby assigns, transfers, and conveys to <span class="doc-placeholder">${f.llcName||'[ LLC NAME ]'}</span>, LLC ("Company") all right, title, and interest in and to the following intellectual property:</p>
+      <p style="margin:0.75rem 0;padding:0.75rem 1rem;background:rgba(160,184,152,0.06);border-left:3px solid var(--accent-dim);font-style:italic;">
+        <span class="doc-placeholder">${f.ipDesc||'[ LIST ALL IP: artwork inventory, social media handles, brand name, logo, website domain, etc. ]'}</span>
+      </p>
+      <p>The assignment includes all copyrights, trademarks, trade names, goodwill, and other intellectual property rights in the above, whether registered or unregistered, in all countries and territories.</p>
+
+      <h2>Retained Rights</h2>
+      <p>Assignor retains all rights to any artwork, creative work, or intellectual property created prior to the date of this agreement that is <span class="doc-section-num">not listed above</span>.</p>
+
+      <h2>Consideration</h2>
+      <p>In consideration of this assignment, the Company acknowledges Assignor's membership interest in the Company and the mutual obligations set forth in the Operating Agreement.</p>
+
+      <h2>Further Assurances</h2>
+      <p>Assignor agrees to execute any additional documents reasonably requested by the Company to perfect or record the assignment of any IP listed above.</p>
+
+      <br><p style="border-top:1px solid var(--border);padding-top:1rem;font-style:italic;">Sky <span class="doc-placeholder">${f.skyLast||'[ LAST NAME ]'}</span> (Assignor) ___________________________ Date ___________</p>
+      <p style="margin-top:0.75rem;font-style:italic;">Meagan Pratt, on behalf of <span class="doc-placeholder">${f.llcName||'[ LLC NAME ]'}</span>, LLC ___________________________ Date ___________</p>
+    `
+  },
+  {
+    id: 'expense-policy',
+    num: '06',
+    name: 'expense reimbursement policy',
+    subtitle: 'Documents how personal business expenses are tracked and repaid by the LLC',
+    priority: 'Adopt before opening bank account',
+    defaultStatus: 'draft',
+    fields: [
+      { key: 'llcName',   label: 'LLC Name',           placeholder: 'Legal LLC name' },
+      { key: 'effectDate',label: 'Effective Date',      placeholder: 'e.g. April 15, 2026', type:'date' },
+      { key: 'submitDays',label: 'Receipt Submission Window', placeholder: 'e.g. 30 days' },
+    ],
+    gdocsUrl: 'https://docs.google.com/document/create',
+    gdocsLabel: 'Open in Google Docs →',
+    gdocsNote: 'Both members should review and agree on the reimbursement timeline before signing.',
+    content: (f) => `
+      <h1>Expense Reimbursement Policy</h1>
+      <p class="doc-center"><span class="doc-placeholder">${f.llcName||'[ LLC NAME ]'}</span>, LLC<br>Effective <span class="doc-placeholder">${f.effectDate||'[ DATE ]'}</span></p>
+
+      <h2>Purpose</h2>
+      <p>This policy establishes how Members and authorized personnel of <span class="doc-placeholder">${f.llcName||'[ LLC NAME ]'}</span>, LLC may be reimbursed for legitimate business expenses paid from personal funds, ensuring compliance with IRS requirements and maintaining the LLC's liability protection.</p>
+
+      <h2>Eligible Expenses</h2>
+      <p>Reimbursable expenses must be: (a) ordinary and necessary for the business; (b) not personal in nature; (c) supported by a receipt or invoice; and (d) accompanied by a written description of the business purpose.</p>
+
+      <h2>Pre-Approval</h2>
+      <p>Expenses over $<span class="doc-placeholder">[ THRESHOLD ]</span> require prior approval from both Members. Routine small expenses (art supplies, shipping, software subscriptions) do not require pre-approval.</p>
+
+      <h2>Submission Process</h2>
+      <p>1. Collect receipt at time of purchase.</p>
+      <p>2. Record in the Expense Log (attached to Member Loan Agreement or tracked in the business hub).</p>
+      <p>3. Submit receipts and log to the other Member within <span class="doc-placeholder">${f.submitDays||'[ 30 ]'}</span> days of the expense.</p>
+      <p>4. Reimbursement transferred from business bank account within 14 days of approved submission.</p>
+
+      <h2>Documentation Required</h2>
+      <p>Each expense submission must include: date of purchase, vendor name, amount, description of item purchased, and clear business purpose (e.g. "art supplies for commission #12" or "DJI Osmo Pocket — studio filming equipment").</p>
+
+      <h2>Non-Reimbursable</h2>
+      <p>Personal expenses, fines or penalties, alcohol not part of a documented client meeting, and any expense not directly related to Company business are not reimbursable.</p>
+
+      <br><p style="border-top:1px solid var(--border);padding-top:1rem;font-style:italic;">Meagan Pratt ___________________________ Date ___________</p>
+      <p style="margin-top:0.75rem;font-style:italic;">Sky <span class="doc-placeholder">${f.skyLast||'[ LAST NAME ]'}</span> ___________________________ Date ___________</p>
+    `
+  },
+  {
+    id: 'consignment',
+    num: '07',
+    name: 'consignment agreement',
+    subtitle: 'For selling artwork through galleries, shops, or art shows',
+    priority: 'Before first gallery or show',
+    defaultStatus: 'draft',
+    fields: [
+      { key: 'llcName',    label: 'LLC Name',           placeholder: 'Legal LLC name' },
+      { key: 'galName',    label: 'Gallery / Venue Name', placeholder: 'Name of gallery or shop' },
+      { key: 'commission', label: 'Commission Percentage', placeholder: 'e.g. 40%' },
+      { key: 'duration',   label: 'Consignment Period',   placeholder: 'e.g. 90 days' },
+      { key: 'signDate',   label: 'Agreement Date',       placeholder: 'e.g. April 15, 2026', type:'date' },
+    ],
+    gdocsUrl: 'https://docs.google.com/document/create',
+    gdocsLabel: 'Open in Google Docs →',
+    gdocsNote: 'Create a master template in Google Docs, then duplicate and fill in gallery details for each venue.',
+    content: (f) => `
+      <h1>Consignment Agreement</h1>
+      <p class="doc-center">Between <span class="doc-placeholder">${f.llcName||'[ LLC NAME ]'}</span>, LLC ("Artist")<br>and <span class="doc-placeholder">${f.galName||'[ GALLERY / VENUE NAME ]'}</span> ("Gallery")<br>Effective <span class="doc-placeholder">${f.signDate||'[ DATE ]'}</span></p>
+      <div class="doc-notice">Draft template — review with a Texas attorney. Attach a separate Schedule A listing all consigned works with their retail prices.</div>
+
+      <h2>Consignment of Artwork</h2>
+      <p>Artist consigns to Gallery the artwork listed in Schedule A ("Works") for display and sale during the consignment period. Artist retains title to all Works until sold. Gallery receives Works on consignment only — they are not property of the Gallery.</p>
+
+      <h2>Consignment Period</h2>
+      <p>This agreement is effective for <span class="doc-placeholder">${f.duration||'[ 90 DAYS ]'}</span> from the date above, unless extended by written mutual agreement. Unsold Works must be returned within 14 days of expiration.</p>
+
+      <h2>Pricing and Commission</h2>
+      <p>Works shall be sold at the retail prices listed in Schedule A. Upon sale, Gallery retains <span class="doc-placeholder">${f.commission||'[ 40% ]'}</span> as commission and remits the balance to Artist within 30 days of sale.</p>
+
+      <h2>Care of Works</h2>
+      <p>Gallery agrees to: (a) handle and display Works with reasonable care; (b) insure Works against damage and theft for their full retail value; (c) notify Artist immediately of any damage, theft, or loss; (d) not permit Works to leave the Gallery premises without written consent of Artist.</p>
+
+      <h2>Records and Reporting</h2>
+      <p>Gallery shall maintain accurate records of all Works received and sold, and provide Artist with a written statement of sales and inventory upon request, and at least monthly.</p>
+
+      <h2>Return of Works</h2>
+      <p>Artist may request return of any unsold Work at any time with 7 days written notice. Gallery shall return Works at Gallery's expense in the same condition received.</p>
+
+      <h2>Governing Law</h2>
+      <p>This agreement is governed by the laws of the State of Texas.</p>
+
+      <br><p style="border-top:1px solid var(--border);padding-top:1rem;font-style:italic;">Authorized for <span class="doc-placeholder">${f.llcName||'[ LLC NAME ]'}</span>, LLC ___________________________ Date ___________</p>
+      <p style="margin-top:0.75rem;font-style:italic;"><span class="doc-placeholder">${f.galName||'[ GALLERY ]'}</span> Representative ___________________________ Date ___________</p>
+    `
+  },
+  {
+    id: 'commission-agreement',
+    num: '08',
+    name: 'commission agreement',
+    subtitle: 'For custom artwork orders — deposit, payment schedule & copyright terms',
+    priority: 'Before first custom order',
+    defaultStatus: 'draft',
+    fields: [
+      { key: 'llcName',   label: 'LLC Name',          placeholder: 'Legal LLC name' },
+      { key: 'clientName',label: 'Client Name',        placeholder: 'Client full name' },
+      { key: 'artDesc',   label: 'Artwork Description', placeholder: 'e.g. 24x36 oil painting, portrait of…', type:'textarea' },
+      { key: 'price',     label: 'Total Price ($)',     placeholder: 'e.g. $800' },
+      { key: 'deposit',   label: 'Deposit Amount ($)',  placeholder: 'e.g. $400 (50%)' },
+      { key: 'delivery',  label: 'Estimated Delivery',  placeholder: 'e.g. 6-8 weeks from deposit' },
+    ],
+    gdocsUrl: 'https://docs.google.com/document/create',
+    gdocsLabel: 'Open in Google Docs →',
+    gdocsNote: 'Keep a master template in Google Docs and duplicate for each client commission.',
+    content: (f) => `
+      <h1>Commission Agreement</h1>
+      <p class="doc-center">Between <span class="doc-placeholder">${f.llcName||'[ LLC NAME ]'}</span>, LLC ("Artist")<br>and <span class="doc-placeholder">${f.clientName||'[ CLIENT NAME ]'}</span> ("Client")</p>
+      <div class="doc-notice">Draft template — customize for each client commission.</div>
+
+      <h2>Commissioned Work</h2>
+      <p>Artist agrees to create the following original artwork ("Work"):</p>
+      <p style="padding:0.5rem 1rem;background:rgba(160,184,152,0.06);border-left:3px solid var(--accent-dim);margin:0.5rem 0;">
+        <span class="doc-placeholder">${f.artDesc||'[ DESCRIPTION: dimensions, medium, subject matter, reference images, special requirements ]'}</span>
+      </p>
+
+      <h2>Payment</h2>
+      <p><span class="doc-section-num">Total Price:</span> <span class="doc-placeholder">${f.price||'[ $ TOTAL ]'}</span></p>
+      <p><span class="doc-section-num">Deposit:</span> <span class="doc-placeholder">${f.deposit||'[ $ DEPOSIT ]'}</span> due upon signing. Work begins upon receipt of deposit.</p>
+      <p><span class="doc-section-num">Balance:</span> Remaining balance due prior to delivery or shipping of completed Work.</p>
+      <p><span class="doc-section-num">Cancellation:</span> Deposit is non-refundable if Client cancels after work has commenced.</p>
+
+      <h2>Timeline</h2>
+      <p>Estimated completion: <span class="doc-placeholder">${f.delivery||'[ ESTIMATED DELIVERY ]'}</span>. Timeline may be adjusted with written notice.</p>
+
+      <h2>Revisions</h2>
+      <p>This commission includes up to two (2) rounds of revisions based on in-progress photos. Additional revisions are billed at $[ HOURLY RATE ]/hour. Major changes to the original brief after work has commenced may incur additional fees.</p>
+
+      <h2>Copyright and Ownership</h2>
+      <p>Artist retains full copyright in the Work. Client receives a limited license to display the Work personally and share photos for personal use. Client may NOT reproduce, sell, or use the Work commercially without a separate written license from Artist.</p>
+
+      <h2>Delivery</h2>
+      <p>Work will be delivered [ in person / shipped ] at Client's expense. Artist is not responsible for damage during shipping once handed to carrier.</p>
+
+      <br><p style="border-top:1px solid var(--border);padding-top:1rem;font-style:italic;">Authorized for <span class="doc-placeholder">${f.llcName||'[ LLC NAME ]'}</span>, LLC ___________________________ Date ___________</p>
+      <p style="margin-top:0.75rem;font-style:italic;"><span class="doc-placeholder">${f.clientName||'[ CLIENT NAME ]'}</span> ___________________________ Date ___________</p>
+    `
+  },
+  {
+    id: 'brand-partnership',
+    num: '09',
+    name: 'brand partnership agreement',
+    subtitle: 'For sponsored posts, collabs & influencer partnerships',
+    priority: 'When first inquiry arrives',
+    defaultStatus: 'draft',
+    fields: [
+      { key: 'llcName',   label: 'LLC Name',          placeholder: 'Legal LLC name' },
+      { key: 'brandName', label: 'Brand Name',         placeholder: 'Company or brand name' },
+      { key: 'deliverables', label: 'Deliverables',    placeholder: 'e.g. 2 Instagram feed posts, 3 Stories, 1 TikTok video', type:'textarea' },
+      { key: 'fee',       label: 'Total Fee ($)',       placeholder: 'e.g. $500' },
+      { key: 'postBy',    label: 'Post-By Date',        placeholder: 'e.g. May 1, 2026', type:'date' },
+      { key: 'exclusivity', label: 'Exclusivity Period', placeholder: 'e.g. None / 30 days / 90 days' },
+    ],
+    gdocsUrl: 'https://docs.google.com/document/create',
+    gdocsLabel: 'Open in Google Docs →',
+    gdocsNote: 'Duplicate for each brand deal — most brands will also send their own contract, but this protects you if they don\'t.',
+    content: (f) => `
+      <h1>Brand Partnership Agreement</h1>
+      <p class="doc-center">Between <span class="doc-placeholder">${f.llcName||'[ LLC NAME ]'}</span>, LLC ("Creator")<br>and <span class="doc-placeholder">${f.brandName||'[ BRAND NAME ]'}</span> ("Brand")</p>
+      <div class="doc-notice">Draft template — review each brand deal carefully. Some brands will provide their own contract; always read before signing theirs.</div>
+
+      <h2>Partnership Overview</h2>
+      <p>Creator agrees to create and publish sponsored content featuring Brand's products or services as described below, in accordance with FTC disclosure guidelines.</p>
+
+      <h2>Deliverables</h2>
+      <p><span class="doc-placeholder">${f.deliverables||'[ LIST ALL DELIVERABLES: platform, format, quantity, specifications ]'}</span></p>
+      <p>All content must include clear FTC-compliant disclosure (e.g. #ad, #sponsored, or paid partnership tag).</p>
+
+      <h2>Compensation</h2>
+      <p><span class="doc-section-num">Total Fee:</span> <span class="doc-placeholder">${f.fee||'[ $ FEE ]'}</span>, payable within 30 days of final content delivery.</p>
+      <p><span class="doc-section-num">Payment Method:</span> [ Bank transfer / Check / PayPal to LLC account ]</p>
+
+      <h2>Timeline</h2>
+      <p>Content must be published by <span class="doc-placeholder">${f.postBy||'[ POST-BY DATE ]'}</span>. Creator will share drafts for approval at least 5 business days before posting.</p>
+
+      <h2>Approval Process</h2>
+      <p>Brand has 3 business days to review and approve/request revisions on draft content. One round of revisions is included. Approval is assumed if no response within 3 business days of draft submission.</p>
+
+      <h2>Content Rights & Usage</h2>
+      <p>Creator retains copyright in all content. Brand receives a limited license to reshare content on Brand's own social media accounts with credit to Creator for 12 months. Brand may NOT use content in paid advertising without a separate written license and additional compensation.</p>
+
+      <h2>Exclusivity</h2>
+      <p>Exclusivity period: <span class="doc-placeholder">${f.exclusivity||'[ NONE / PERIOD ]'}</span>. During any exclusivity period, Creator will not publish content for direct competitors of Brand.</p>
+
+      <h2>Morality and Values</h2>
+      <p>Creator reserves the right to decline or modify content that conflicts with their personal values or artistic direction, and will notify Brand within 48 hours of receiving a brief if concerns arise.</p>
+
+      <br><p style="border-top:1px solid var(--border);padding-top:1rem;font-style:italic;">Authorized for <span class="doc-placeholder">${f.llcName||'[ LLC NAME ]'}</span>, LLC ___________________________ Date ___________</p>
+      <p style="margin-top:0.75rem;font-style:italic;"><span class="doc-placeholder">${f.brandName||'[ BRAND ]'}</span> Representative ___________________________ Date ___________</p>
+    `
+  },
+  {
+    id: 'sales-tax',
+    num: '10',
+    name: 'sales tax registration',
+    subtitle: 'Texas Comptroller permit — required before first sale of physical goods',
+    priority: 'Before first sale',
+    defaultStatus: 'required',
+    fields: [
+      { key: 'llcName',  label: 'LLC Name',       placeholder: 'Legal LLC name' },
+      { key: 'ein',      label: 'EIN Number',      placeholder: 'XX-XXXXXXX' },
+      { key: 'permitNum',label: 'Permit Number (once received)', placeholder: 'Texas Sales Tax Permit #' },
+    ],
+    gdocsNote: 'Register free at comptroller.texas.gov — no document needed, just the online form. Texas sales tax is 8.25% in Austin.',
+    gdocsUrl: 'https://mycpa.cpa.state.tx.us/securityext/logon/logon.do',
+    gdocsLabel: 'Texas Comptroller Portal →',
+    content: (f) => `
+      <h1>Sales Tax Registration Record</h1>
+      <p class="doc-center">Texas Comptroller — Internal Tracking Record</p>
+      <div class="doc-notice">Register free at comptroller.texas.gov. Texas sales tax rate in Austin is 8.25% (6.25% state + 2% city). Physical artwork sales are taxable. Digital downloads may be taxable. Consult your CPA for specifics.</div>
+
+      <h2>Business Information</h2>
+      <p><span class="doc-section-num">LLC Name:</span> <span class="doc-placeholder">${f.llcName||'[ LLC NAME ]'}</span></p>
+      <p><span class="doc-section-num">EIN:</span> <span class="doc-placeholder">${f.ein||'[ XX-XXXXXXX ]'}</span></p>
+      <p><span class="doc-section-num">Texas Sales Tax Permit Number:</span> <span class="doc-placeholder">${f.permitNum||'[ PERMIT # ]'}</span></p>
+
+      <h2>Collection Obligations</h2>
+      <p><span class="doc-section-num">Physical artwork:</span> Taxable — collect 8.25% sales tax on all Texas sales.</p>
+      <p><span class="doc-section-num">Out-of-state sales:</span> May require collecting tax in other states once you exceed nexus thresholds. Ask your CPA when revenue grows.</p>
+      <p><span class="doc-section-num">Filing frequency:</span> Monthly if over $1,500/month; quarterly if under. Due dates: 20th of the month following the period.</p>
+
+      <h2>Reminders</h2>
+      <p>File returns even in months with no sales (zero return). Keep all sales receipts for at least 4 years.</p>
+    `
+  },
+];
+
+// ══════════════════════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════════════════════
+const STATE_KEY = 'skylane_docs_v1';
+let state = {};
+try { state = JSON.parse(localStorage.getItem(STATE_KEY)) || {}; } catch(e) { state = {}; }
+
+function saveState() {
+  try { localStorage.setItem(STATE_KEY, JSON.stringify(state)); } catch(e) {}
+}
+
+function getDocState(id) {
+  if (!state[id]) state[id] = {};
+  return state[id];
+}
+
+// ══════════════════════════════════════════════════════════════
+// RENDER
+// ══════════════════════════════════════════════════════════════
+function getStatus(id, defaultStatus) {
+  return getDocState(id).status || defaultStatus;
+}
+
+function getFields(id) {
+  return getDocState(id).fields || {};
+}
+
+function updateCounts() {
+  const counts = { required:0, draft:0, review:0, signed:0 };
+  DOCS.forEach(doc => {
+    const s = getStatus(doc.id, doc.defaultStatus);
+    if (counts[s] !== undefined) counts[s]++;
+  });
+  document.getElementById('cnt-required').textContent = counts.required;
+  document.getElementById('cnt-draft').textContent    = counts.draft;
+  document.getElementById('cnt-review').textContent   = counts.review;
+  document.getElementById('cnt-signed').textContent   = counts.signed;
+}
+
+function renderDoc(doc) {
+  const status   = getStatus(doc.id, doc.defaultStatus);
+  const fields   = getFields(doc.id);
+
+  const row = document.createElement('div');
+  row.className = `doc-row status-${status}`;
+  row.id = `row-${doc.id}`;
+
+  // ── header ──
+  const header = document.createElement('div');
+  header.className = 'doc-header';
+  header.innerHTML = `
+    <div class="doc-header-left">
+      <div class="doc-num">${doc.num}</div>
+      <div class="doc-info">
+        <div class="doc-name">${doc.name}</div>
+        <div class="doc-subtitle">${doc.subtitle}</div>
+      </div>
+    </div>
+    <div class="doc-header-right">
+      <select class="status-select" id="sel-${doc.id}">
+        <option value="required" ${status==='required'?'selected':''}>Needs Filing</option>
+        <option value="draft"    ${status==='draft'   ?'selected':''}>Draft</option>
+        <option value="review"   ${status==='review'  ?'selected':''}>In Review</option>
+        <option value="signed"   ${status==='signed'  ?'selected':''}>Signed</option>
+      </select>
+      <span class="doc-chevron">▶</span>
+    </div>
+  `;
+
+  // prevent select click from toggling panel
+  header.querySelector('.status-select').addEventListener('click', e => e.stopPropagation());
+  header.querySelector('.status-select').addEventListener('change', e => {
+    const s = e.target.value;
+    getDocState(doc.id).status = s;
+    saveState();
+    row.className = `doc-row status-${s} ${row.classList.contains('open')?'open':''}`;
+    updateCounts();
+  });
+
+  header.addEventListener('click', () => {
+    row.classList.toggle('open');
+  });
+
+  // ── panel ──
+  const panel = document.createElement('div');
+  panel.className = 'doc-panel';
+
+  const inner = document.createElement('div');
+  inner.className = 'doc-panel-inner';
+
+  // tabs
+  inner.innerHTML = `
+    <div class="panel-tabs">
+      <div class="panel-tab active" data-tab="view">view document</div>
+      <div class="panel-tab" data-tab="fill">fill in fields</div>
+      <div class="panel-tab" data-tab="links">share & export</div>
+    </div>
+    <div class="tab-pane active" id="tab-view-${doc.id}">
+      <div class="doc-viewer" id="viewer-${doc.id}">${doc.content(fields)}</div>
+    </div>
+    <div class="tab-pane" id="tab-fill-${doc.id}">
+      <div class="fill-form" id="form-${doc.id}"></div>
+    </div>
+    <div class="tab-pane" id="tab-links-${doc.id}">
+      <div style="padding:1rem 0;">
+        <p style="font-family:var(--sans);font-size:11px;font-weight:300;color:var(--muted);line-height:1.7;margin-bottom:1.25rem;">${doc.gdocsNote}</p>
+        <div style="display:flex;gap:0.75rem;flex-wrap:wrap;">
+          <a class="btn btn-gdocs" href="${doc.gdocsUrl}" target="_blank">${doc.gdocsLabel}</a>
+          <button class="btn btn-ghost" onclick="copyDocText('${doc.id}')">copy document text</button>
+          <button class="btn btn-ghost" onclick="printDoc('${doc.id}')">print / save as PDF</button>
+        </div>
+        <p style="font-family:var(--sans);font-size:10px;color:var(--faint);margin-top:1rem;letter-spacing:0.04em;">Tip: To use in Google Docs, click "Open in Google Docs", then paste the copied text into the blank document. Both Sky and Meagan can then edit collaboratively.</p>
+      </div>
+    </div>
+  `;
+
+  // tab switching
+  inner.querySelectorAll('.panel-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      inner.querySelectorAll('.panel-tab').forEach(t => t.classList.remove('active'));
+      inner.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+      tab.classList.add('active');
+      inner.querySelector(`#tab-${tab.dataset.tab}-${doc.id}`).classList.add('active');
+    });
+  });
+
+  // build fill form
+  const formEl = inner.querySelector(`#form-${doc.id}`);
+  doc.fields.forEach(field => {
+    const group = document.createElement('div');
+    group.className = `fill-group${field.type==='textarea'?' full':''}`;
+    const val = fields[field.key] || '';
+    if (field.type === 'textarea') {
+      group.innerHTML = `
+        <label class="fill-label">${field.label}</label>
+        <textarea class="fill-textarea" placeholder="${field.placeholder}" data-key="${field.key}">${val}</textarea>
+      `;
+    } else {
+      group.innerHTML = `
+        <label class="fill-label">${field.label}</label>
+        <input class="fill-input" type="text" placeholder="${field.placeholder}" value="${val}" data-key="${field.key}"/>
+      `;
+    }
+    formEl.appendChild(group);
+  });
+
+  // actions row
+  const actionsDiv = document.createElement('div');
+  actionsDiv.className = 'fill-actions';
+  actionsDiv.innerHTML = `
+    <button class="btn btn-primary" data-docid="${doc.id}">apply to document</button>
+    <button class="btn btn-ghost" data-docid="${doc.id}" data-clear>clear fields</button>
+  `;
+  actionsDiv.querySelector('[data-docid].btn-primary').addEventListener('click', () => {
+    const inputs = formEl.querySelectorAll('[data-key]');
+    inputs.forEach(inp => {
+      getDocState(doc.id).fields = getDocState(doc.id).fields || {};
+      getDocState(doc.id).fields[inp.dataset.key] = inp.value;
+    });
+    saveState();
+    const currentFields = getDocState(doc.id).fields || {};
+    document.querySelector(`#viewer-${doc.id}`).innerHTML = doc.content(currentFields);
+    // switch to view tab
+    inner.querySelectorAll('.panel-tab').forEach(t => t.classList.remove('active'));
+    inner.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+    inner.querySelector('[data-tab="view"]').classList.add('active');
+    inner.querySelector(`#tab-view-${doc.id}`).classList.add('active');
+  });
+  actionsDiv.querySelector('[data-clear]').addEventListener('click', () => {
+    formEl.querySelectorAll('[data-key]').forEach(inp => inp.value = '');
+    getDocState(doc.id).fields = {};
+    saveState();
+    document.querySelector(`#viewer-${doc.id}`).innerHTML = doc.content({});
+  });
+  formEl.appendChild(actionsDiv);
+
+  panel.appendChild(inner);
+  row.appendChild(header);
+  row.appendChild(panel);
+  return row;
+}
+
+function copyDocText(docId) {
+  const viewer = document.getElementById(`viewer-${docId}`);
+  const text = viewer.innerText;
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = event.target;
+    const orig = btn.textContent;
+    btn.textContent = 'copied!';
+    setTimeout(() => btn.textContent = orig, 2000);
+  }).catch(() => {
+    // fallback
+    const ta = document.createElement('textarea');
+    ta.value = viewer.innerText;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+  });
+}
+
+function printDoc(docId) {
+  const viewer = document.getElementById(`viewer-${docId}`);
+  const docName = DOCS.find(d=>d.id===docId)?.name || 'document';
+  const win = window.open('', '_blank');
+  win.document.write(`
+    <html><head><title>${docName}</title>
+    <style>
+      body{font-family:Georgia,serif;font-size:13px;line-height:1.8;color:#111;margin:2cm;max-width:700px;}
+      h1{font-size:18px;text-align:center;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.5rem;}
+      h2{font-size:12px;text-transform:uppercase;letter-spacing:0.1em;margin:1.5rem 0 0.5rem;border-bottom:1px solid #ccc;padding-bottom:4px;}
+      p{margin-bottom:0.75rem;}
+      table{width:100%;border-collapse:collapse;font-size:11px;}
+      th,td{padding:5px 8px;border:1px solid #ccc;text-align:left;}
+      th{background:#f0f0f0;}
+    </style>
+    </head><body>${viewer.innerHTML}</body></html>
+  `);
+  win.document.close();
+  win.print();
+}
+
+// ── init ──
+document.addEventListener('DOMContentLoaded', () => {
+  const d = new Date();
+  document.getElementById('today-date').textContent = d.toLocaleDateString('en-US', {
+    weekday:'long', month:'long', day:'numeric', year:'numeric'
+  });
+
+  const list = document.getElementById('doc-list');
+  DOCS.forEach(doc => list.appendChild(renderDoc(doc)));
+  updateCounts();
+});
+</script>
+</body>
+</html>
