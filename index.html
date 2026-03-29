@@ -201,8 +201,6 @@
     .widget-card.linked .card-arrow { opacity: 1; }
     .widget-card.linked:hover .card-arrow { transform: translateX(4px); }
 
-
-
     /* ── Footer ──────────────────────────────────────────────────── */
     .hub-footer {
       border-top: 1px solid var(--border);
@@ -251,7 +249,6 @@
       .wordmark { font-size: 42px; }
       .header { flex-direction: column; align-items: flex-start; }
       .header-right { text-align: left; }
-      .info-strip { grid-template-columns: 1fr; }
       .widget-grid { grid-template-columns: 1fr 1fr; }
     }
   </style>
@@ -266,8 +263,6 @@
       <div class="header-sub">creative studio hub</div>
     </div>
   </header>
-
-
 
   <div class="section-label">tools & widgets</div>
 
@@ -331,6 +326,18 @@
       </div>
     </div>
 
+    <div class="widget-card linked" id="card-documents" onclick="window.open('documents.html','_self')">
+      <div>
+        <div class="card-num">06</div>
+        <div class="card-title">documents</div>
+        <div class="card-desc">LLC agreements, contracts & legal templates</div>
+      </div>
+      <div class="card-footer">
+        <span class="status status-live">● live</span>
+        <span class="card-arrow">→</span>
+      </div>
+    </div>
+
   </div>
 
   <footer class="hub-footer">
@@ -359,14 +366,12 @@
       a.className = 'card-arrow'; a.textContent = '→'; f.appendChild(a);
     }
     card.addEventListener('click', () => window.open(url, '_self'));
-
   }
 
   // ── activate as widgets go live ───────────────────────────────
   // activateCard('tasks',     'tasks.html');
-  // activateCard('finance',   'finance.html');
-  // activateCard('crm',       'crm.html');
   // activateCard('analytics', 'analytics.html');
+  // activateCard('documents', 'documents.html'); // already live above
   // ─────────────────────────────────────────────────────────────
 </script>
 </body>
