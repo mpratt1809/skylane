@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>skylane — tasks</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Inter:wght@300;400;500&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #2d3d38;
+      --surface:   #243530;
+      --surface2:  #1e2e2a;
+      --surface3:  #192824;
+      --border:    #3a4d48;
+      --text:      #f0ece4;
+      --muted:     #5a7068;
+      --faint:     #3d5048;
+      --accent:    #a0b898;
+      --accent-dim:#6a8878;
+      --font:      'Syne', sans-serif;
+      --sans:      'Inter', sans-serif;
+      --m-color:   #89b4c8;   /* meagan — muted teal-blue */
+      --s-color:   #c4a87a;   /* sky — warm gold */
+      --both-color:#a0b898;   /* both — accent green */
+      --done-color:#4a6058;
+      --urgent:    #c07060;
+      --warn:      #c4a84a;
+      --ok:        #6ab87a;
+    }
+
+    html { scroll-behavior: smooth; }
+    body { font-family: var(--sans); background: var(--bg); color: var(--text); min-height: 100vh; }
+
+    .page { max-width: 920px; margin: 0 auto; padding: 3.5rem 2rem 6rem; }
+
+    /* ── Header ── */
+    .header {
+      display: flex; align-items: flex-end; justify-content: space-between;
+      padding-bottom: 2rem; border-bottom: 1px solid var(--border);
+      margin-bottom: 2.5rem; gap: 1rem; flex-wrap: wrap;
+      animation: riseIn 0.5s ease both;
+    }
+    .header-left { display: flex; align-items: flex-end; gap: 1.5rem; }
+    .back-btn {
+      font-family: var(--sans); font-size: 11px; font-weight: 400;
+      letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted);
+      cursor: pointer; text-decoration: none; transition: color 0.2s;
+      padding-bottom: 4px; border-bottom: 1px solid transparent;
+    }
+    .back-btn:hover { color: var(--accent); border-bottom-color: var(--accent); }
+    .wordmark {
+      font-family: var(--font); font-size: 42px; font-weight: 800;
+      letter-spacing: -0.03em; line-height: 0.95; text-transform: lowercase; color: var(--text);
+    }
+    .wordmark span { color: var(--accent); }
+    .header-right { text-align: right; }
+    .header-date { font-family: var(--sans); font-size: 11px; font-weight: 300; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+    .header-sub  { font-family: var(--sans); font-size: 9px; font-weight: 300; letter-spacing: 0.22em; text-transform: uppercase; color: var(--faint); margin-top: 3px; }
+
+    /* ── Stats bar ── */
+    .stats-bar {
+      display: flex; gap: 5px; margin-bottom: 2rem; flex-wrap: wrap;
+      animation: riseIn 0.5s ease 0.08s both;
+    }
+    .stat-pill {
+      background: var(--surface); border: 1px solid var(--border);
+      padding: 0.7rem 1.1rem; display: flex; flex-direction: column; gap: 3px; flex: 1; min-width: 100px;
+    }
+    .stat-num { font-family: var(--font); font-size: 22px; font-weight: 800; color: var(--text); line-height: 1; }
+    .stat-label { font-family: var(--sans); font-size: 9px; font-weight: 400; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); }
+    .stat-pill.done .stat-num { color: var(--ok); }
+    .stat-pill.urgent .stat-num { color: var(--urgent); }
+
+    /* ── Progress track ── */
+    .progress-track {
+      height: 3px; background: var(--border); margin-bottom: 2.5rem;
+      animation: riseIn 0.5s ease 0.1s both;
+    }
+    .progress-fill { height: 100%; background: var(--accent); transition: width 0.4s ease; }
+
+    /* ── Toolbar ── */
+    .toolbar {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap;
+      animation: riseIn 0.5s ease 0.12s both;
+    }
+    .toolbar-left { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+    .filter-btn {
+      font-family: var(--sans); font-size: 9px; font-weight: 500; letter-spacing: 0.14em;
+      text-transform: uppercase; padding: 5px 10px; border: 1px solid var(--border);
+      background: transparent; color: var(--muted); cursor: pointer; transition: all 0.15s;
+    }
+    .filter-btn:hover { color: var(--text); border-color: var(--accent-dim); }
+    .filter-btn.active { background: var(--accent); border-color: var(--accent); color: var(--surface); }
+    .add-task-btn {
+      font-family: var(--sans); font-size: 10px; font-weight: 500; letter-spacing: 0.14em;
+      text-transform: uppercase; padding: 7px 14px; border: 1px solid var(--accent);
+      background: transparent; color: var(--accent); cursor: pointer; transition: all 0.15s;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .add-task-btn:hover { background: var(--accent); color: var(--surface); }
+
+    /* ── Section label ── */
+    .section-label {
+      font-family: var(--sans); font-size: 9px; font-weight: 500; letter-spacing: 0.22em;
+      text-transform: uppercase; color: var(--faint); margin-bottom: 0.75rem;
+      display: flex; align-items: center; gap: 12px;
+    }
+    .section-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+    /* ── Category group ── */
+    .category-group { margin-bottom: 2rem; animation: riseIn 0.5s ease 0.16s both; }
+    .cat-header {
+      display: flex; align-items: center; gap: 10px; margin-bottom: 6px;
+      cursor: pointer; user-select: none; padding: 4px 0;
+    }
+    .cat-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+    .cat-name {
+      font-family: var(--font); font-size: 13px; font-weight: 800; text-transform: lowercase;
+      letter-spacing: -0.01em; color: var(--text);
+    }
+    .cat-count {
+      font-family: var(--sans); font-size: 10px; font-weight: 300;
+      color: var(--muted); margin-left: 2px;
+    }
+    .cat-chevron { font-size: 9px; color: var(--muted); margin-left: auto; transition: transform 0.2s; }
+    .category-group.collapsed .cat-chevron { transform: rotate(-90deg); }
+    .category-group.collapsed .task-list { display: none; }
+
+    /* ── Task list ── */
+    .task-list { display: flex; flex-direction: column; gap: 3px; }
+
+    /* ── Task row ── */
+    .task-row {
+      background: var(--surface); border: 1px solid var(--border);
+      border-left: 3px solid var(--border);
+      overflow: hidden; transition: border-left-color 0.2s, opacity 0.2s;
+    }
+    .task-row.done { opacity: 0.5; border-left-color: var(--done-color) !important; }
+    .task-row.priority-high { border-left-color: var(--urgent); }
+    .task-row.priority-med  { border-left-color: var(--warn); }
+    .task-row.priority-low  { border-left-color: var(--accent-dim); }
+
+    /* subtask indent */
+    .task-row.subtask { margin-left: 1.5rem; background: var(--surface2); }
+
+    .task-main {
+      display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 1rem;
+      cursor: pointer; transition: background 0.15s;
+    }
+    .task-row:not(.done) .task-main:hover { background: var(--surface2); }
+
+    /* checkbox */
+    .task-check {
+      width: 16px; height: 16px; border: 1px solid var(--border); background: transparent;
+      flex-shrink: 0; cursor: pointer; appearance: none; -webkit-appearance: none;
+      position: relative; transition: background 0.15s, border-color 0.15s;
+    }
+    .task-check:checked { background: var(--accent-dim); border-color: var(--accent-dim); }
+    .task-check:checked::after {
+      content: '✓'; position: absolute; top: 50%; left: 50%;
+      transform: translate(-50%, -50%); font-size: 10px; color: var(--surface); font-weight: 700;
+    }
+
+    .task-body { flex: 1; min-width: 0; }
+    .task-title {
+      font-family: var(--sans); font-size: 13px; font-weight: 400; color: var(--text);
+      line-height: 1.4; transition: color 0.2s;
+    }
+    .task-row.done .task-title { text-decoration: line-through; color: var(--muted); }
+    .task-meta {
+      display: flex; align-items: center; gap: 8px; margin-top: 3px; flex-wrap: wrap;
+    }
+
+    /* assignee pill */
+    .assignee {
+      font-family: var(--sans); font-size: 9px; font-weight: 500; letter-spacing: 0.1em;
+      text-transform: uppercase; padding: 2px 6px; border-radius: 2px;
+    }
+    .assignee.meagan { color: var(--m-color); background: rgba(137,180,200,0.1); }
+    .assignee.sky    { color: var(--s-color); background: rgba(196,168,122,0.1); }
+    .assignee.both   { color: var(--both-color); background: rgba(160,184,152,0.1); }
+
+    /* due/tag */
+    .task-tag {
+      font-family: var(--sans); font-size: 9px; font-weight: 400; letter-spacing: 0.08em;
+      color: var(--muted); text-transform: uppercase;
+    }
+    .task-tag.urgent { color: var(--urgent); }
+    .task-tag.warn   { color: var(--warn); }
+
+    /* notes indicator & expand */
+    .task-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+    .notes-btn {
+      font-family: var(--sans); font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase;
+      color: var(--muted); background: transparent; border: 1px solid var(--border);
+      padding: 2px 7px; cursor: pointer; transition: all 0.15s;
+    }
+    .notes-btn:hover { color: var(--accent); border-color: var(--accent-dim); }
+    .notes-btn.has-notes { color: var(--accent); border-color: var(--accent-dim); }
+    .subtask-toggle {
+      font-family: var(--sans); font-size: 9px; color: var(--muted); background: none;
+      border: none; cursor: pointer; padding: 2px 4px; transition: color 0.15s;
+    }
+    .subtask-toggle:hover { color: var(--accent); }
+
+    /* ── Notes panel ── */
+    .notes-panel { display: none; border-top: 1px solid var(--border); }
+    .notes-panel.open { display: block; }
+    .notes-inner { padding: 0.75rem 1rem 0.75rem 2.75rem; }
+    .notes-textarea {
+      width: 100%; background: var(--surface3); border: 1px solid var(--border);
+      color: var(--text); font-family: var(--sans); font-size: 12px; font-weight: 300;
+      line-height: 1.6; padding: 0.6rem 0.75rem; resize: vertical; min-height: 70px;
+      outline: none; transition: border-color 0.15s;
+    }
+    .notes-textarea:focus { border-color: var(--accent); }
+    .notes-textarea::placeholder { color: var(--muted); }
+    .notes-actions { display: flex; gap: 8px; margin-top: 6px; align-items: center; }
+    .notes-save {
+      font-family: var(--sans); font-size: 9px; font-weight: 500; letter-spacing: 0.12em;
+      text-transform: uppercase; padding: 4px 10px; background: var(--accent);
+      border: none; color: var(--surface); cursor: pointer; transition: background 0.15s;
+    }
+    .notes-save:hover { background: #b8ceb0; }
+    .notes-hint { font-family: var(--sans); font-size: 10px; color: var(--muted); font-style: italic; }
+
+    /* ── Add task modal ── */
+    .modal-overlay {
+      position: fixed; inset: 0; background: rgba(18,26,24,0.85); z-index: 100;
+      display: none; align-items: center; justify-content: center; padding: 2rem;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal {
+      background: var(--surface); border: 1px solid var(--border); border-left: 3px solid var(--accent);
+      width: 100%; max-width: 520px; padding: 2rem; animation: riseIn 0.25s ease both;
+    }
+    .modal-title { font-family: var(--font); font-size: 18px; font-weight: 800; text-transform: lowercase; color: var(--text); margin-bottom: 1.5rem; }
+    .form-group { display: flex; flex-direction: column; gap: 5px; margin-bottom: 1rem; }
+    .form-label { font-family: var(--sans); font-size: 9px; font-weight: 500; letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted); }
+    .form-input, .form-select, .form-textarea {
+      background: var(--surface2); border: 1px solid var(--border); color: var(--text);
+      font-family: var(--sans); font-size: 13px; font-weight: 300; padding: 0.6rem 0.75rem;
+      outline: none; transition: border-color 0.15s; width: 100%;
+    }
+    .form-input:focus, .form-select:focus, .form-textarea:focus { border-color: var(--accent); }
+    .form-select option { background: var(--surface2); }
+    .form-textarea { resize: vertical; min-height: 70px; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+    .modal-actions { display: flex; gap: 0.75rem; margin-top: 1.5rem; }
+    .btn-primary {
+      font-family: var(--sans); font-size: 10px; font-weight: 500; letter-spacing: 0.14em;
+      text-transform: uppercase; padding: 0.65rem 1.25rem; background: var(--accent);
+      border: 1px solid var(--accent); color: var(--surface); cursor: pointer; transition: all 0.15s;
+    }
+    .btn-primary:hover { background: #b8ceb0; }
+    .btn-ghost {
+      font-family: var(--sans); font-size: 10px; font-weight: 500; letter-spacing: 0.14em;
+      text-transform: uppercase; padding: 0.65rem 1.25rem; background: transparent;
+      border: 1px solid var(--border); color: var(--muted); cursor: pointer; transition: all 0.15s;
+    }
+    .btn-ghost:hover { color: var(--text); border-color: var(--accent-dim); }
+
+    /* ── Footer ── */
+    .hub-footer {
+      border-top: 1px solid var(--border); padding-top: 1.25rem; margin-top: 3rem;
+      display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.75rem;
+      animation: riseIn 0.5s ease 0.22s both;
+    }
+    .footer-l { font-family: var(--font); font-size: 13px; font-weight: 700; text-transform: lowercase; letter-spacing: -0.01em; color: var(--faint); }
+    .footer-l span { color: var(--accent); }
+    .footer-r { font-family: var(--sans); font-size: 9px; font-weight: 300; letter-spacing: 0.18em; text-transform: uppercase; color: var(--faint); }
+
+    @keyframes riseIn { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
+
+    @media (max-width: 600px) {
+      .page { padding: 2rem 1.25rem 4rem; }
+      .wordmark { font-size: 32px; }
+      .header { flex-direction: column; align-items: flex-start; }
+      .stats-bar { flex-wrap: wrap; }
+      .form-row { grid-template-columns: 1fr; }
+      .task-row.subtask { margin-left: 0.75rem; }
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <!-- Header -->
+  <header class="header">
+    <div class="header-left">
+      <a class="back-btn" href="index.html">← hub</a>
+      <div class="wordmark">sky<span>lane</span></div>
+    </div>
+    <div class="header-right">
+      <div class="header-date" id="today-date"></div>
+      <div class="header-sub">tasks & to-dos</div>
+    </div>
+  </header>
+
+  <!-- Stats -->
+  <div class="stats-bar" id="stats-bar">
+    <div class="stat-pill"><div class="stat-num" id="stat-total">0</div><div class="stat-label">total tasks</div></div>
+    <div class="stat-pill done"><div class="stat-num" id="stat-done">0</div><div class="stat-label">completed</div></div>
+    <div class="stat-pill urgent"><div class="stat-num" id="stat-urgent">0</div><div class="stat-label">high priority</div></div>
+    <div class="stat-pill"><div class="stat-num" id="stat-meagan">0</div><div class="stat-label">meagan</div></div>
+    <div class="stat-pill"><div class="stat-num" id="stat-sky">0</div><div class="stat-label">sky</div></div>
+  </div>
+
+  <!-- Progress -->
+  <div class="progress-track"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+
+  <!-- Toolbar -->
+  <div class="toolbar">
+    <div class="toolbar-left">
+      <span class="section-label" style="margin:0;min-width:80px;">filter</span>
+      <button class="filter-btn active" data-filter="all">all</button>
+      <button class="filter-btn" data-filter="meagan">meagan</button>
+      <button class="filter-btn" data-filter="sky">sky</button>
+      <button class="filter-btn" data-filter="both">both</button>
+      <button class="filter-btn" data-filter="open">open</button>
+      <button class="filter-btn" data-filter="done">done</button>
+    </div>
+    <button class="add-task-btn" id="open-modal-btn">+ add task</button>
+  </div>
+
+  <!-- Task list rendered here -->
+  <div id="task-container"></div>
+
+  <!-- Footer -->
+  <footer class="hub-footer">
+    <div class="footer-l">sky<span>lane</span> &nbsp;·&nbsp; sky &amp; meagan &nbsp;·&nbsp; mixed creative &nbsp;·&nbsp; art &amp; design</div>
+    <div class="footer-r">byskylane.com</div>
+  </footer>
+</div>
+
+<!-- Add Task Modal -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal">
+    <div class="modal-title" id="modal-heading">add task</div>
+    <div class="form-group">
+      <label class="form-label">Task Title</label>
+      <input class="form-input" id="f-title" type="text" placeholder="What needs to be done?"/>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Category</label>
+        <select class="form-select" id="f-cat"></select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Assign To</label>
+        <select class="form-select" id="f-assign">
+          <option value="both">Both</option>
+          <option value="meagan">Meagan</option>
+          <option value="sky">Sky</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Priority</label>
+        <select class="form-select" id="f-priority">
+          <option value="low">Low</option>
+          <option value="med">Medium</option>
+          <option value="high">High</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Parent Task (optional)</label>
+        <select class="form-select" id="f-parent">
+          <option value="">— none (top-level) —</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Notes (optional)</label>
+      <textarea class="form-textarea" id="f-notes" placeholder="Any details, links, or context…"></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-primary" id="modal-save-btn">save task</button>
+      <button class="btn-ghost" id="modal-cancel-btn">cancel</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════════
+// DEFAULT DATA
+// ══════════════════════════════════════════════════════════
+const DEFAULT_CATEGORIES = [
+  { id:'llc',       name:'llc formation',      color:'#89b4c8' },
+  { id:'finance',   name:'business finance',   color:'#c4a87a' },
+  { id:'legal',     name:'legal documents',    color:'#a0b898' },
+  { id:'ops',       name:'studio operations',  color:'#b898c8' },
+  { id:'content',   name:'content & brand',    color:'#c8a898' },
+  { id:'personal',  name:'personal',           color:'#7a9080' },
+];
+
+let nextId = 100;
+const uid = () => String(++nextId);
+
+const DEFAULT_TASKS = [
+  // ── LLC Formation ──
+  { id:'1',  cat:'llc', title:'Receive SOS approval confirmation',       assign:'meagan', priority:'high', done:false, notes:'Should arrive within 5–7 business days of filing. Save the PDF permanently — needed for bank account.',   parentId:null },
+  { id:'2',  cat:'llc', title:'Apply for EIN from IRS',                  assign:'meagan', priority:'high', done:false, notes:'irs.gov/businesses — free, takes ~10 mins. EIN is needed before you can open a business bank account. Apply immediately after SOS approval.', parentId:null },
+  { id:'3',  cat:'llc', title:'Choose registered agent service',         assign:'meagan', priority:'high', done:false, notes:'Top picks: Lone Star ($50/yr, local Austin, own building) or Northwest ($125/yr, best national reputation). Must have active service on file.',  parentId:null },
+
+  // ── Legal Documents ──
+  { id:'10', cat:'legal', title:'Sign Operating Agreement',              assign:'both',   priority:'high', done:false, notes:'Both Meagan and Sky must sign. Fill in LLC name, dates, dollar amounts, Sky\'s last name, and threshold amount. Have Texas attorney review first.', parentId:null },
+  { id:'11', cat:'legal', title:'Have Operating Agreement reviewed by Texas attorney', assign:'meagan', priority:'high', done:false, notes:'Especially important given unmarried co-owner structure. Cost estimate: $200–$400 for a brief review.', parentId:'10' },
+  { id:'12', cat:'legal', title:'Sign Member Loan Agreement',            assign:'both',   priority:'high', done:false, notes:'Document all business expenses Meagan has personally paid. Fill in loan schedule with date, description, vendor, and amount. Attach receipts.', parentId:null },
+  { id:'13', cat:'legal', title:'Fill in Meagan\'s expense log in Member Loan Agreement', assign:'meagan', priority:'high', done:false, notes:'List every business purchase made personally to date with receipts. This becomes the formal loan balance the LLC owes Meagan.', parentId:'12' },
+  { id:'14', cat:'legal', title:'Sign IP Assignment Agreement',          assign:'both',   priority:'med',  done:false, notes:'Before first sale. Transfers Sky\'s existing artwork, social media handles, and brand assets to the LLC. Be thorough listing all IP.', parentId:null },
+  { id:'15', cat:'legal', title:'Sign Expense Reimbursement Policy',     assign:'both',   priority:'med',  done:false, notes:'One-page policy governing how personal business expenses are tracked and reimbursed. Sign before opening the bank account.', parentId:null },
+
+  // ── Business Finance ──
+  { id:'20', cat:'finance', title:'Open business bank account',          assign:'meagan', priority:'high', done:false, notes:'Need: SOS approval, EIN confirmation letter, signed Operating Agreement, government ID for both members, initial deposit. Recommended: Relay (online, no fees) or Chase Business.', parentId:null },
+  { id:'21', cat:'finance', title:'Both members make initial capital contributions', assign:'both', priority:'high', done:false, notes:'Transfer agreed opening amount from personal to business account. Document in Operating Agreement capital table.', parentId:'20' },
+  { id:'22', cat:'finance', title:'Reimburse Meagan for prior business expenses', assign:'both', priority:'high', done:false, notes:'Transfer from business account to Meagan\'s personal account for all expenses logged in the Member Loan Agreement.', parentId:'20' },
+  { id:'23', cat:'finance', title:'Set up bookkeeping system',           assign:'meagan', priority:'med',  done:false, notes:'Options: Wave (free), QuickBooks Self-Employed (~$15/mo), or Notion/spreadsheet. Track all income and expenses from day one.', parentId:null },
+  { id:'24', cat:'finance', title:'Consult fee-only CPA or fiduciary',  assign:'meagan', priority:'high', done:false, notes:'Confirm member loan interest rate treatment, quarterly estimated tax setup, and Roth IRA income eligibility. Look for Texas small business CPA.', parentId:null },
+  { id:'25', cat:'finance', title:'Register for Texas Sales Tax Permit', assign:'meagan', priority:'high', done:false, notes:'Free at comptroller.texas.gov. Required before first artwork sale. Austin rate is 8.25%. File zero returns even in months with no sales.', parentId:null },
+
+  // ── Studio Operations ──
+  { id:'30', cat:'ops', title:'Set up studio filming space',             assign:'sky',    priority:'med',  done:false, notes:'Position C-stand with boom arm over easel. Check overhead camera angle. Set up side tripod with iPad for alternate angle.', parentId:null },
+  { id:'31', cat:'ops', title:'Order DJI Osmo Pocket 3 Creator Combo',  assign:'meagan', priority:'high', done:false, notes:'Current price ~$629–$749 on Amazon. Includes DJI Mic 2, battery handle, wide-angle lens, mini tripod. ASIN: B0CG19FGQ5.', parentId:null },
+  { id:'32', cat:'ops', title:'Order remaining equipment',               assign:'meagan', priority:'med',  done:false, notes:'NEEWER C-Stand (~$120), GoPro 1/4" adapter 2-pack (~$8), Cenawin iPad mount (~$18), Bluetooth shutter remote (~$9).', parentId:null },
+  { id:'33', cat:'ops', title:'Download CapCut and VN Video Editor',    assign:'sky',    priority:'low',  done:false, notes:'Both free. CapCut for primary editing (speed ramp, captions, beat sync). VN as backup. Best used on iPad for large timeline.', parentId:null },
+  { id:'34', cat:'ops', title:'Open PO Box or virtual mailbox',         assign:'meagan', priority:'med',  done:false, notes:'Keep home address off business correspondence. USPS PO Box ~$50–$200/yr. Consider USPS street-format address for more professional look.', parentId:null },
+
+  // ── Content & Brand ──
+  { id:'40', cat:'content', title:'Define content pillars and posting cadence', assign:'both', priority:'med', done:false, notes:'What types of content to post (timelapse, finished reveals, process narration, behind the scenes). How often per platform. Align with Sky\'s art schedule.', parentId:null },
+  { id:'41', cat:'content', title:'Film first timelapse test session',  assign:'sky',    priority:'med',  done:false, notes:'Test overhead C-stand angle, lighting, and DJI mic placement. Export at 120x speed for a 30-second reel. Check colour accuracy of paint.', parentId:null },
+  { id:'42', cat:'content', title:'Set up byskylane.com domain',        assign:'meagan', priority:'low',  done:false, notes:'Domain was offered free with registered agent or Northwest formation. Point to Skylane hub or a simple landing page.', parentId:null },
+  { id:'43', cat:'content', title:'Create business email address',      assign:'meagan', priority:'low',  done:false, notes:'e.g. hello@byskylane.com — use Google Workspace (~$6/mo) or Zoho Mail (free tier). Separate from personal email for professionalism.', parentId:null },
+
+  // ── Personal ──
+  { id:'50', cat:'personal', title:'Cancel LinkedIn Premium',           assign:'meagan', priority:'high', done:false, notes:'Annual renewal ~$259. Cancel before renewal date to avoid charge. Go to linkedin.com > Me > Settings > Subscriptions.', parentId:null },
+  { id:'51', cat:'personal', title:'Transfer funds to Wealthfront HYSA',assign:'meagan', priority:'med',  done:false, notes:'After April 17 paycheck. Already planned in financial session.', parentId:null },
+  { id:'52', cat:'personal', title:'Confirm Chase Marriott autopay',    assign:'meagan', priority:'med',  done:false, notes:'Verify autopay is active and payment is being allocated correctly to principal on the highest-APR card.', parentId:null },
+  { id:'53', cat:'personal', title:'Execute Rollover IRA reallocation at Fidelity', assign:'meagan', priority:'med', done:false, notes:'Target: FXAIX 45% / FSKAX 15% / FZILX 35% / QQQ 5%. Ideally after fiduciary advisor consultation.', parentId:null },
+];
+
+// ══════════════════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════════════════
+const STORE_KEY = 'skylane_tasks_v2';
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed.tasks && parsed.categories) return parsed;
+    }
+  } catch(e) {}
+  return { tasks: JSON.parse(JSON.stringify(DEFAULT_TASKS)), categories: JSON.parse(JSON.stringify(DEFAULT_CATEGORIES)) };
+}
+
+function saveState() {
+  try { localStorage.setItem(STORE_KEY, JSON.stringify({ tasks: state.tasks, categories: state.categories })); } catch(e) {}
+}
+
+let state = loadState();
+
+// fix nextId
+state.tasks.forEach(t => { const n = parseInt(t.id); if (!isNaN(n) && n >= nextId) nextId = n + 1; });
+
+// ══════════════════════════════════════════════════════════
+// RENDER
+// ══════════════════════════════════════════════════════════
+let activeFilter = 'all';
+
+function getAssigneeLabel(a) {
+  if (a === 'meagan') return '<span class="assignee meagan">meagan</span>';
+  if (a === 'sky')    return '<span class="assignee sky">sky</span>';
+  return '<span class="assignee both">both</span>';
+}
+
+function taskMatchesFilter(task) {
+  if (activeFilter === 'all')    return true;
+  if (activeFilter === 'open')   return !task.done;
+  if (activeFilter === 'done')   return task.done;
+  if (activeFilter === 'meagan') return task.assign === 'meagan' || task.assign === 'both';
+  if (activeFilter === 'sky')    return task.assign === 'sky' || task.assign === 'both';
+  if (activeFilter === 'both')   return task.assign === 'both';
+  return true;
+}
+
+function renderTasks() {
+  const container = document.getElementById('task-container');
+  container.innerHTML = '';
+
+  const cats = state.categories;
+  cats.forEach(cat => {
+    const topTasks = state.tasks.filter(t => t.cat === cat.id && !t.parentId);
+    const allCatTasks = state.tasks.filter(t => t.cat === cat.id);
+
+    // visible tasks (top-level only for filter count)
+    const visibleTop = topTasks.filter(t => taskMatchesFilter(t));
+    // also check subtasks
+    const visibleSubs = allCatTasks.filter(t => t.parentId && taskMatchesFilter(t));
+    if (visibleTop.length === 0 && visibleSubs.length === 0) return;
+
+    const group = document.createElement('div');
+    group.className = 'category-group';
+    group.dataset.cat = cat.id;
+
+    const openCount = allCatTasks.filter(t => !t.done).length;
+
+    group.innerHTML = `
+      <div class="cat-header" onclick="toggleCat('${cat.id}')">
+        <div class="cat-dot" style="background:${cat.color}"></div>
+        <div class="cat-name">${cat.name}</div>
+        <div class="cat-count">${openCount} open</div>
+        <div class="cat-chevron">▼</div>
+      </div>
+      <div class="task-list" id="list-${cat.id}"></div>
+    `;
+
+    container.appendChild(group);
+
+    const list = group.querySelector(`#list-${cat.id}`);
+
+    visibleTop.forEach(task => {
+      list.appendChild(buildTaskRow(task, false));
+      // subtasks
+      const subs = state.tasks.filter(t => t.parentId === task.id && taskMatchesFilter(t));
+      subs.forEach(sub => list.appendChild(buildTaskRow(sub, true)));
+    });
+
+    // subtasks whose parent isn't visible (filter edge case)
+    visibleSubs.forEach(sub => {
+      if (!visibleTop.find(t => t.id === sub.parentId)) {
+        list.appendChild(buildTaskRow(sub, true));
+      }
+    });
+  });
+
+  updateStats();
+}
+
+function buildTaskRow(task, isSub) {
+  const row = document.createElement('div');
+  row.className = `task-row${isSub?' subtask':''} priority-${task.priority}${task.done?' done':''}`;
+  row.id = `task-${task.id}`;
+
+  const hasSubs = !isSub && state.tasks.some(t => t.parentId === task.id);
+  const subCount = hasSubs ? state.tasks.filter(t => t.parentId === task.id).length : 0;
+  const subDone  = hasSubs ? state.tasks.filter(t => t.parentId === task.id && t.done).length : 0;
+  const hasNotes = task.notes && task.notes.trim().length > 0;
+
+  const tagHtml = task.priority === 'high'
+    ? '<span class="task-tag urgent">● high priority</span>'
+    : task.priority === 'med'
+    ? '<span class="task-tag warn">● medium</span>'
+    : '';
+
+  const subToggleHtml = hasSubs
+    ? `<button class="subtask-toggle" onclick="event.stopPropagation();toggleSubs('${task.id}')" title="subtasks">${subDone}/${subCount} subs</button>`
+    : '';
+
+  row.innerHTML = `
+    <div class="task-main">
+      <input type="checkbox" class="task-check" ${task.done?'checked':''} onclick="event.stopPropagation();toggleDone('${task.id}')"/>
+      <div class="task-body">
+        <div class="task-title">${task.title}</div>
+        <div class="task-meta">
+          ${getAssigneeLabel(task.assign)}
+          ${tagHtml}
+        </div>
+      </div>
+      <div class="task-right">
+        ${subToggleHtml}
+        <button class="notes-btn ${hasNotes?'has-notes':''}" onclick="event.stopPropagation();toggleNotes('${task.id}')" title="${hasNotes?'view notes':'add notes'}">
+          ${hasNotes ? '✎ notes' : '+ notes'}
+        </button>
+      </div>
+    </div>
+    <div class="notes-panel" id="notes-${task.id}">
+      <div class="notes-inner">
+        <textarea class="notes-textarea" id="ntxt-${task.id}" placeholder="Add notes, links, or context for this task…">${task.notes||''}</textarea>
+        <div class="notes-actions">
+          <button class="notes-save" onclick="saveNotes('${task.id}')">save</button>
+          <span class="notes-hint">notes save to your browser and persist between sessions</span>
+        </div>
+      </div>
+    </div>
+  `;
+
+  return row;
+}
+
+// ── subtask visibility toggle (show/hide all subtasks of a parent) ──
+function toggleSubs(parentId) {
+  const subs = document.querySelectorAll(`.task-row.subtask`);
+  subs.forEach(el => {
+    if (!el.id) return;
+    const taskId = el.id.replace('task-', '');
+    const task = state.tasks.find(t => t.id === taskId);
+    if (task && task.parentId === parentId) {
+      el.style.display = el.style.display === 'none' ? '' : 'none';
+    }
+  });
+}
+
+function toggleCat(catId) {
+  const group = document.querySelector(`[data-cat="${catId}"]`);
+  if (group) group.classList.toggle('collapsed');
+}
+
+function toggleDone(taskId) {
+  const task = state.tasks.find(t => t.id === taskId);
+  if (!task) return;
+  task.done = !task.done;
+  saveState();
+  renderTasks();
+}
+
+function toggleNotes(taskId) {
+  const panel = document.getElementById(`notes-${taskId}`);
+  if (!panel) return;
+  panel.classList.toggle('open');
+  if (panel.classList.contains('open')) {
+    setTimeout(() => { const ta = document.getElementById(`ntxt-${taskId}`); if(ta) ta.focus(); }, 50);
+  }
+}
+
+function saveNotes(taskId) {
+  const task = state.tasks.find(t => t.id === taskId);
+  const ta = document.getElementById(`ntxt-${taskId}`);
+  if (!task || !ta) return;
+  task.notes = ta.value;
+  saveState();
+  // update button style
+  const btn = document.querySelector(`#task-${taskId} .notes-btn`);
+  if (btn) {
+    btn.className = `notes-btn${task.notes.trim() ? ' has-notes' : ''}`;
+    btn.textContent = task.notes.trim() ? '✎ notes' : '+ notes';
+  }
+  // close
+  const panel = document.getElementById(`notes-${taskId}`);
+  if (panel) panel.classList.remove('open');
+}
+
+// ── stats ──
+function updateStats() {
+  const all   = state.tasks;
+  const done  = all.filter(t => t.done);
+  const urgent = all.filter(t => t.priority === 'high' && !t.done);
+  const meagan = all.filter(t => (t.assign==='meagan'||t.assign==='both') && !t.done);
+  const sky   = all.filter(t => (t.assign==='sky'||t.assign==='both') && !t.done);
+
+  document.getElementById('stat-total').textContent  = all.length;
+  document.getElementById('stat-done').textContent   = done.length;
+  document.getElementById('stat-urgent').textContent = urgent.length;
+  document.getElementById('stat-meagan').textContent = meagan.length;
+  document.getElementById('stat-sky').textContent    = sky.length;
+
+  const pct = all.length ? Math.round((done.length / all.length) * 100) : 0;
+  document.getElementById('progress-fill').style.width = pct + '%';
+}
+
+// ══════════════════════════════════════════════════════════
+// FILTERS
+// ══════════════════════════════════════════════════════════
+document.querySelectorAll('.filter-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    activeFilter = btn.dataset.filter;
+    renderTasks();
+  });
+});
+
+// ══════════════════════════════════════════════════════════
+// ADD TASK MODAL
+// ══════════════════════════════════════════════════════════
+function populateCatSelect() {
+  const sel = document.getElementById('f-cat');
+  sel.innerHTML = state.categories.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+}
+
+function populateParentSelect() {
+  const sel = document.getElementById('f-parent');
+  const tops = state.tasks.filter(t => !t.parentId);
+  sel.innerHTML = `<option value="">— none (top-level) —</option>` +
+    tops.map(t => `<option value="${t.id}">${t.title.length > 50 ? t.title.slice(0,50)+'…' : t.title}</option>`).join('');
+}
+
+document.getElementById('open-modal-btn').addEventListener('click', () => {
+  populateCatSelect();
+  populateParentSelect();
+  document.getElementById('f-title').value    = '';
+  document.getElementById('f-notes').value    = '';
+  document.getElementById('f-priority').value = 'med';
+  document.getElementById('f-assign').value   = 'both';
+  document.getElementById('f-parent').value   = '';
+  document.getElementById('modal-heading').textContent = 'add task';
+  document.getElementById('modal-save-btn').textContent = 'save task';
+  document.getElementById('modal-save-btn').dataset.editId = '';
+  document.getElementById('modal-overlay').classList.add('open');
+  setTimeout(() => document.getElementById('f-title').focus(), 50);
+});
+
+document.getElementById('modal-cancel-btn').addEventListener('click', () => {
+  document.getElementById('modal-overlay').classList.remove('open');
+});
+
+document.getElementById('modal-overlay').addEventListener('click', e => {
+  if (e.target === document.getElementById('modal-overlay')) {
+    document.getElementById('modal-overlay').classList.remove('open');
+  }
+});
+
+document.getElementById('modal-save-btn').addEventListener('click', () => {
+  const title = document.getElementById('f-title').value.trim();
+  if (!title) { document.getElementById('f-title').style.borderColor = 'var(--urgent)'; return; }
+  document.getElementById('f-title').style.borderColor = '';
+
+  const editId = document.getElementById('modal-save-btn').dataset.editId;
+
+  if (editId) {
+    const task = state.tasks.find(t => t.id === editId);
+    if (task) {
+      task.title    = title;
+      task.cat      = document.getElementById('f-cat').value;
+      task.assign   = document.getElementById('f-assign').value;
+      task.priority = document.getElementById('f-priority').value;
+      task.parentId = document.getElementById('f-parent').value || null;
+      task.notes    = document.getElementById('f-notes').value;
+    }
+  } else {
+    state.tasks.push({
+      id:       uid(),
+      cat:      document.getElementById('f-cat').value,
+      title,
+      assign:   document.getElementById('f-assign').value,
+      priority: document.getElementById('f-priority').value,
+      done:     false,
+      notes:    document.getElementById('f-notes').value,
+      parentId: document.getElementById('f-parent').value || null,
+    });
+  }
+
+  saveState();
+  document.getElementById('modal-overlay').classList.remove('open');
+  renderTasks();
+});
+
+// keyboard close
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') document.getElementById('modal-overlay').classList.remove('open');
+});
+
+// ══════════════════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', () => {
+  const d = new Date();
+  document.getElementById('today-date').textContent = d.toLocaleDateString('en-US', {
+    weekday:'long', month:'long', day:'numeric', year:'numeric'
+  });
+  renderTasks();
+});
+</script>
+</body>
+</html>
