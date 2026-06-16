@@ -378,7 +378,6 @@
         </div>
       </div>
       <div id="table-wrap"><div class="empty-state">Connecting to database…</div></div>
-
     </div>
   </div>
 
@@ -404,8 +403,6 @@
         </div>
       </div>
     </div>
-
-    <!-- Category breakdown table -->
     <div class="table-section" style="margin-top:1.25rem;">
       <div class="table-header"><div class="table-title">Category totals</div></div>
       <div id="category-breakdown"></div>
@@ -450,8 +447,8 @@
             <label>Invoice tag(s) <span style="font-size:10px;font-weight:300;text-transform:none;letter-spacing:0;color:var(--faint)">— tag to one or more invoices</span></label>
             <div class="inv-tag-input-wrap" id="d-inv-tags-display"></div>
             <div style="display:flex;gap:6px;margin-top:6px">
-              <input type="text" id="d-inv-tag-input" placeholder="e.g. INV-001" style="flex:1" onkeydown="if(event.key===&apos;Enter&apos;){event.preventDefault();addInvTag(&apos;d&apos;)}"/>
-              <button class="btn btn-sm" onclick="addInvTag(&apos;d&apos;)">+ add</button>
+              <input type="text" id="d-inv-tag-input" placeholder="e.g. INV-001" style="flex:1" onkeydown="if(event.key==='Enter'){event.preventDefault();addInvTag('d')}"/>
+              <button class="btn btn-sm" onclick="addInvTag('d')">+ add</button>
             </div>
           </div>
         </div>
@@ -506,9 +503,7 @@
           </select>
         </div>
         <div class="field"><label>Client <span style="font-size:10px;font-weight:300;text-transform:none;letter-spacing:0;color:var(--faint)">— coming soon</span></label>
-          <select id="exp-client" style="width:100%" disabled>
-            <option value="all">All clients</option>
-          </select>
+          <select id="exp-client" style="width:100%" disabled><option value="all">All clients</option></select>
         </div>
       </div>
       <div class="field">
@@ -559,7 +554,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
 import { getFirestore, collection, addDoc, deleteDoc, doc, query, orderBy, onSnapshot, updateDoc } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
 
-// ── Config ────────────────────────────────────────────────────────────────────
 const firebaseConfig = {
   apiKey: "AIzaSyAun3Pl1UzjFATAFCb8SxuXqOfw0qsmuko",
   authDomain: "skylane-515de.firebaseapp.com",
@@ -569,7 +563,6 @@ const firebaseConfig = {
   appId: "1:391640319800:web:7699f961f6fd73ebb0a3cd"
 };
 const WORKER_URL = "https://skylane-api.mpratt1809.workers.dev";
-// ─────────────────────────────────────────────────────────────────────────────
 
 const fbApp = initializeApp(firebaseConfig);
 const db    = getFirestore(fbApp);
@@ -594,7 +587,6 @@ let lineItemsData = [];
 let barChart = null;
 let donutChart = null;
 
-// ── Sync ──────────────────────────────────────────────────────────────────────
 function setSyncStatus(state) {
   document.getElementById('sync-dot').className = 'sync-dot ' + state;
   document.getElementById('sync-label').textContent = state === 'live' ? 'Live' : state === 'offline' ? 'Offline' : 'Connecting…';
@@ -612,7 +604,6 @@ function startListener() {
   });
 }
 
-// ── Year filter ───────────────────────────────────────────────────────────────
 function initYearFilter() {
   const sel = document.getElementById('year-filter');
   const yr = new Date().getFullYear();
@@ -622,7 +613,6 @@ function initYearFilter() {
   sel.value = yr;
 }
 
-// ── Tab navigation ────────────────────────────────────────────────────────────
 window.switchTab = (id, btn) => {
   document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('.nav-tab').forEach(b => b.classList.remove('active'));
@@ -639,7 +629,6 @@ window.switchUploadMode = (mode, btn) => {
   mf.classList.toggle('active', mode === 'manual');
 };
 
-// ── Upload handlers ───────────────────────────────────────────────────────────
 window.handleDragOver = e => { e.preventDefault(); document.getElementById('upload-zone').classList.add('dragover'); };
 window.handleDragLeave = () => document.getElementById('upload-zone').classList.remove('dragover');
 window.handleDrop = e => { e.preventDefault(); document.getElementById('upload-zone').classList.remove('dragover'); const f = e.dataTransfer.files[0]; if (f) processFile(f); };
@@ -670,13 +659,14 @@ function processFile(file) {
   reader.readAsDataURL(file);
 }
 
-// ── AI scanning ───────────────────────────────────────────────────────────────
+// ── AI scanning — UPDATED PROMPT ─────────────────────────────────────────────
 async function scanReceiptWithAI(b64, mime) {
   const labels = ['Scanning receipt with AI…','Extracting line items…','Identifying vendor & date…','Calculating totals…'];
   let i = 0;
   const el = document.getElementById('scan-label');
   const ticker = setInterval(() => { el.textContent = labels[i++ % labels.length]; }, 1800);
   try {
+    const currentYear = new Date().getFullYear();
     const res = await fetch(WORKER_URL, {
       method: 'POST',
       headers: { 'Content-Type':'application/json' },
@@ -684,7 +674,23 @@ async function scanReceiptWithAI(b64, mime) {
         model: 'claude-sonnet-4-20250514', max_tokens: 1000,
         messages: [{ role:'user', content: [
           { type:'image', source:{ type:'base64', media_type: mime, data: b64 } },
-          { type:'text', text:`You are a receipt scanner for a US small business. Respond ONLY with valid JSON, no markdown, no extra text before or after.
+          { type:'text', text:`You are a receipt scanner for a US small business. Extract data carefully using these rules:
+
+DATES: The current year is ${currentYear}. Receipt dates should be assumed to be from the current year unless clearly printed otherwise. Receipts often use 2-digit years (e.g. 05/21/26 means 2026-05-21). Read date digits exactly as printed — never substitute or assume a different year. Output all dates as YYYY-MM-DD.
+
+LINE ITEM PRICES: Receipts often show multiple dollar amounts per item stacked vertically — for example a sale price, a "Regular Price", and a "You Saved" amount. Rules for which price to use:
+- Always use the rightmost dollar amount on the item's line as the price charged
+- This is typically the smallest / discounted price (often labeled "EA" or "Sale")
+- Never use "Regular Price", "Original Price", or "You Saved" values as a line item amount
+- After extracting all line items, verify: their sum should approximately equal the receipt subtotal (before tax). If they don't match, re-examine which column you used and correct it.
+
+LINE ITEM DESCRIPTIONS: Transcribe item names exactly as printed on the receipt — abbreviations, product codes and all. Do not guess, invent, or expand abbreviated names. If a name is truly unreadable, use the item's SKU/code instead.
+
+TOTALS: The receipt total is the final amount charged to the customer after all discounts and taxes. Tax is the sales tax line only. Do not conflate discounts or "You Saved" amounts with the total.
+
+ASSUMPTIONS: Never assume or infer any value that is not clearly visible on the receipt. If a field cannot be read with confidence, return null for that field and describe what was unclear in clarification_needed.
+
+Respond ONLY with valid JSON — no markdown fences, no explanation, no text before or after the JSON object.
 {
   "vendor": "string or null",
   "date": "YYYY-MM-DD or null",
@@ -693,7 +699,7 @@ async function scanReceiptWithAI(b64, mime) {
   "payment_method": "Credit card|Debit card|Cash|Bank transfer|Other|Unknown",
   "line_items": [{"description":"string","amount":0.00}],
   "confidence": "high|medium|low",
-  "clarification_needed": "string or empty",
+  "clarification_needed": "string or empty string",
   "suggested_category": "Equipment & hardware|Software & subscriptions|Office supplies|Travel & transport|Meals & entertainment|Professional services|Other"
 }` }
         ]}]
@@ -714,7 +720,6 @@ async function scanReceiptWithAI(b64, mime) {
   }
 }
 
-// ── Review form ───────────────────────────────────────────────────────────────
 function populateReviewForm(data) {
   document.getElementById('f-vendor').value   = data.vendor || '';
   document.getElementById('f-date').value     = data.date || '';
@@ -726,8 +731,8 @@ function populateReviewForm(data) {
   document.getElementById('receipt-thumb').src = currentImageDataURL;
 
   const badge = document.getElementById('confidence-badge');
-  if (data.confidence === 'high')        { badge.textContent = 'High confidence';     badge.className = 'badge badge-green'; }
-  else if (data.confidence === 'medium') { badge.textContent = 'Review suggested';    badge.className = 'badge badge-amber'; }
+  if (data.confidence === 'high')        { badge.textContent = 'High confidence';      badge.className = 'badge badge-green'; }
+  else if (data.confidence === 'medium') { badge.textContent = 'Review suggested';     badge.className = 'badge badge-amber'; }
   else                                   { badge.textContent = 'Manual review needed'; badge.className = 'badge badge-amber'; }
 
   const clarify = document.getElementById('clarify-box');
@@ -754,13 +759,11 @@ function renderLineItems() {
 
 window.toggleLineItem = i => { lineItemsData[i].removed = !lineItemsData[i].removed; renderLineItems(); };
 
-// ── Save receipt ──────────────────────────────────────────────────────────────
 window.confirmSave = async () => {
   const vendor   = document.getElementById('f-vendor').value.trim();
   const date     = document.getElementById('f-date').value;
   const category = document.getElementById('f-category').value;
 
-  // Recalculate total & tax from kept line items if any exist
   const keptItems = lineItemsData.filter(li => !li.removed);
   let total, tax;
   if (lineItemsData.length > 0 && keptItems.length > 0) {
@@ -783,11 +786,8 @@ window.confirmSave = async () => {
   const btn = document.getElementById('save-btn');
   btn.textContent = 'Saving…'; btn.disabled = true;
   try {
-    // Store compressed image as base64 directly in Firestore
-    // Images are compressed to ~200KB max before saving
     let image_data = null;
     if (currentImageDataURL) {
-      // Further compress for Firestore storage (max 1MB doc limit)
       const img2 = new Image();
       await new Promise(res => { img2.onload = res; img2.src = currentImageDataURL; });
       const MAX2 = 800;
@@ -802,17 +802,16 @@ window.confirmSave = async () => {
       image_data = c2.toDataURL('image/jpeg', 0.65);
     }
     await addDoc(collection(db, 'expenses'), {
-      vendor, date, total,
-      tax,
-      payment:    document.getElementById('f-payment').value,
-      spender:    document.getElementById('f-spender').value,
+      vendor, date, total, tax,
+      payment:      document.getElementById('f-payment').value,
+      spender:      document.getElementById('f-spender').value,
       category,
-      notes:      document.getElementById('f-notes').value.trim(),
+      notes:        document.getElementById('f-notes').value.trim(),
       recurring:    document.getElementById('f-recurring').checked,
       invoice_tags: [...fInvTags],
-      line_items: keptItems,
+      line_items:   keptItems,
       image_data,
-      saved_at:   new Date().toISOString()
+      saved_at:     new Date().toISOString()
     });
     resetForm(); showToast('Receipt saved to SkyLane.');
     switchTab('log', document.querySelector('.nav-tab'));
@@ -822,7 +821,6 @@ window.confirmSave = async () => {
   }
 };
 
-// ── Save manual expense ───────────────────────────────────────────────────────
 window.saveManualExpense = async () => {
   const vendor   = document.getElementById('m-vendor').value.trim();
   const date     = document.getElementById('m-date').value;
@@ -832,16 +830,16 @@ window.saveManualExpense = async () => {
   try {
     await addDoc(collection(db, 'expenses'), {
       vendor, date, total,
-      tax:       parseFloat(document.getElementById('m-tax').value) || 0,
-      payment:   document.getElementById('m-payment').value,
-      spender:   document.getElementById('m-spender').value,
+      tax:          parseFloat(document.getElementById('m-tax').value) || 0,
+      payment:      document.getElementById('m-payment').value,
+      spender:      document.getElementById('m-spender').value,
       category,
-      notes:     document.getElementById('m-notes').value.trim(),
+      notes:        document.getElementById('m-notes').value.trim(),
       recurring:    document.getElementById('m-recurring').checked,
       invoice_tags: [...mInvTags],
-      line_items: [],
-      image_data: null,
-      saved_at:   new Date().toISOString()
+      line_items:   [],
+      image_data:   null,
+      saved_at:     new Date().toISOString()
     });
     ['m-vendor','m-date','m-total','m-tax','m-notes'].forEach(id => document.getElementById(id).value = '');
     ['m-payment','m-spender','m-category'].forEach(id => document.getElementById(id).value = '');
@@ -869,7 +867,6 @@ function showPanel(id) {
   ['scanning-panel','review-panel'].forEach(p => document.getElementById(p).classList.toggle('active', p === id));
 }
 
-// ── Filter & table ────────────────────────────────────────────────────────────
 window.setFilter = (f, btn) => {
   currentFilter = f;
   document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
@@ -892,7 +889,6 @@ function renderTable() {
     wrap.innerHTML = '<div class="empty-state">No expenses found — add your first expense in the "Add expense" tab.</div>';
     return;
   }
-  const total = filtered.reduce((s,e) => s+(e.total||0), 0);
   wrap.innerHTML = `<div style="overflow-x:auto"><table class="expense-table">
     <thead><tr><th></th><th>Vendor</th><th>Date</th><th>Category</th><th>Spender</th><th>Payment</th><th>Tax</th><th>Total</th><th>Invoice(s)</th><th></th></tr></thead>
     <tbody>${filtered.map(e => {
@@ -917,30 +913,26 @@ function renderTable() {
 
 window.deleteExpense = async (id) => {
   if (!confirm('Remove this expense permanently?')) return;
-  try {
-    await deleteDoc(doc(db, 'expenses', id));
-    showToast('Expense removed.');
-  } catch(err) { console.error(err); showToast('Error removing expense.'); }
+  try { await deleteDoc(doc(db, 'expenses', id)); showToast('Expense removed.'); }
+  catch(err) { console.error(err); showToast('Error removing expense.'); }
 };
 
-// ── Stats ─────────────────────────────────────────────────────────────────────
 function updateStats() {
   const year = document.getElementById('year-filter').value;
   const yr = expenses.filter(e => e.date && e.date.startsWith(year));
   const total = yr.reduce((s,e) => s+(e.total||0), 0);
   const recurringTotal = yr.filter(e => e.recurring).reduce((s,e) => s+(e.total||0), 0);
-  document.getElementById('stat-total').textContent = '$' + total.toFixed(2);
-  document.getElementById('stat-count').textContent = yr.length;
-  document.getElementById('stat-year').textContent  = year;
+  document.getElementById('stat-total').textContent    = '$' + total.toFixed(2);
+  document.getElementById('stat-count').textContent    = yr.length;
+  document.getElementById('stat-year').textContent     = year;
   document.getElementById('stat-recurring').textContent = '$' + (recurringTotal / 12).toFixed(2);
   const cats = {};
   yr.forEach(e => { if (e.category) cats[e.category] = (cats[e.category]||0)+(e.total||0); });
   const top = Object.entries(cats).sort((a,b) => b[1]-a[1])[0];
-  document.getElementById('stat-top').textContent    = top ? top[0] : '—';
-  document.getElementById('stat-top-amt').textContent = top ? '$'+top[1].toFixed(2) : '';
+  document.getElementById('stat-top').textContent     = top ? top[0] : '—';
+  document.getElementById('stat-top-amt').textContent  = top ? '$'+top[1].toFixed(2) : '';
 }
 
-// ── Charts ────────────────────────────────────────────────────────────────────
 window.setPeriod = (period, btn) => {
   currentPeriod = period;
   document.querySelectorAll('.period-tab').forEach(b => b.classList.remove('active'));
@@ -951,10 +943,7 @@ window.setPeriod = (period, btn) => {
 function renderCharts() {
   const year = parseInt(document.getElementById('year-filter').value);
   const yr = expenses.filter(e => e.date && e.date.startsWith(String(year)));
-
-  // Bar chart data
   let barLabels = [], barData = [];
-
   if (currentPeriod === 'monthly') {
     document.getElementById('bar-chart-title').textContent = 'Spending by month';
     const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -980,50 +969,27 @@ function renderCharts() {
       return running;
     });
   }
-
-  // Donut data by category
   const catTotals = CATS.map(c => yr.filter(e => e.category === c).reduce((s,e) => s+(e.total||0), 0));
-  const activeCats = CATS.filter((_, i) => catTotals[i] > 0);
-  const activeVals = catTotals.filter(v => v > 0);
+  const activeCats   = CATS.filter((_, i) => catTotals[i] > 0);
+  const activeVals   = catTotals.filter(v => v > 0);
   const activeColors = activeCats.map(c => CAT_COLORS[c].chart);
-
-  // Destroy existing charts
-  if (barChart) { barChart.destroy(); barChart = null; }
+  if (barChart)   { barChart.destroy();   barChart   = null; }
   if (donutChart) { donutChart.destroy(); donutChart = null; }
-
-  const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-  const gridColor = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)';
-  const tickColor = isDark ? '#888' : '#aaa';
-
+  const gridColor = 'rgba(255,255,255,0.06)';
+  const tickColor = '#888';
   barChart = new Chart(document.getElementById('bar-chart'), {
     type: 'bar',
-    data: {
-      labels: barLabels,
-      datasets: [{ data: barData, backgroundColor: '#1a1a2e', borderRadius: 4, borderSkipped: false }]
-    },
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      plugins: { legend: { display: false } },
-      scales: {
-        x: { grid: { color: gridColor }, ticks: { color: tickColor, font: { size: 11 } } },
-        y: { grid: { color: gridColor }, ticks: { color: tickColor, font: { size: 11 }, callback: v => '$'+v.toLocaleString() } }
-      }
-    }
+    data: { labels: barLabels, datasets: [{ data: barData, backgroundColor: '#1a1a2e', borderRadius: 4, borderSkipped: false }] },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } },
+      scales: { x: { grid: { color: gridColor }, ticks: { color: tickColor, font: { size: 11 } } },
+                y: { grid: { color: gridColor }, ticks: { color: tickColor, font: { size: 11 }, callback: v => '$'+v.toLocaleString() } } } }
   });
-
   donutChart = new Chart(document.getElementById('donut-chart'), {
     type: 'doughnut',
-    data: {
-      labels: activeCats,
-      datasets: [{ data: activeVals, backgroundColor: activeColors, borderWidth: 0, hoverOffset: 4 }]
-    },
-    options: {
-      responsive: true, maintainAspectRatio: false, cutout: '65%',
-      plugins: {
-        legend: { position: 'bottom', labels: { font: { size: 11 }, color: tickColor, padding: 12, boxWidth: 12 } },
-        tooltip: { callbacks: { label: ctx => ` $${ctx.raw.toFixed(2)}` } }
-      }
-    }
+    data: { labels: activeCats, datasets: [{ data: activeVals, backgroundColor: activeColors, borderWidth: 0, hoverOffset: 4 }] },
+    options: { responsive: true, maintainAspectRatio: false, cutout: '65%',
+      plugins: { legend: { position: 'bottom', labels: { font: { size: 11 }, color: tickColor, padding: 12, boxWidth: 12 } },
+                 tooltip: { callbacks: { label: ctx => ` $${ctx.raw.toFixed(2)}` } } } }
   });
 }
 
@@ -1037,7 +1003,6 @@ function renderCategoryBreakdown() {
     const pct = total > 0 ? Math.round(catTotal / total * 100) : 0;
     return { c, catTotal, count: catExp.length, pct };
   }).filter(r => r.catTotal > 0).sort((a,b) => b.catTotal - a.catTotal);
-
   const el = document.getElementById('category-breakdown');
   if (!rows.length) { el.innerHTML = '<div class="empty-state">No expenses logged yet.</div>'; return; }
   el.innerHTML = `<div style="overflow-x:auto"><table class="expense-table">
@@ -1059,206 +1024,19 @@ function renderCategoryBreakdown() {
   </table></div>`;
 }
 
-// ── Export CSV ────────────────────────────────────────────────────────────────
-window.exportCSV = () => {
-  const year = document.getElementById('year-filter').value;
-  const data = expenses.filter(e => e.date && e.date.startsWith(year));
-  if (!data.length) { showToast('No expenses to export.'); return; }
-  const headers = ['Date','Vendor','Category','Recurring','Spender','Payment Method','Tax','Total','Business Purpose','Line Items'];
-  const rows = data.map(e => [
-    e.date, e.vendor, e.category, e.recurring ? 'Yes' : 'No',
-    e.spender||'', e.payment||'',
-    Number(e.tax||0).toFixed(2), Number(e.total||0).toFixed(2),
-    e.notes||'',
-    (e.line_items||[]).map(li => `${li.description} ($${Number(li.amount||0).toFixed(2)})`).join('; ')
-  ]);
-  const csv = [headers,...rows].map(r => r.map(c => `"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
-  a.download = `SkyLane_Expenses_${year}.csv`; a.click();
-  showToast('CSV downloaded.');
-};
-
-// ── Export PDF ────────────────────────────────────────────────────────────────
-window.exportPDF = () => {
-  const year = document.getElementById('year-filter').value;
-  const data = expenses.filter(e => e.date && e.date.startsWith(year));
-  if (!data.length) { showToast('No expenses to export.'); return; }
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF({ orientation:'landscape', unit:'mm', format:'a4' });
-  const total = data.reduce((s,e) => s+(e.total||0), 0);
-  const totalTax = data.reduce((s,e) => s+(e.tax||0), 0);
-  doc.setFillColor(26,26,46); doc.rect(0,0,297,20,'F');
-  doc.setTextColor(255,255,255); doc.setFontSize(14); doc.setFont('helvetica','bold');
-  doc.text('SkyLane — Business Expense Report', 14, 13);
-  doc.setFontSize(10); doc.setFont('helvetica','normal');
-  doc.text(`Tax Year: ${year}`, 230, 13);
-  doc.setTextColor(50,50,50);
-  doc.text(`Total: $${total.toFixed(2)}`, 14, 30);
-  doc.text(`Tax paid: $${totalTax.toFixed(2)}`, 80, 30);
-  doc.text(`Receipts: ${data.length}`, 160, 30);
-  doc.text(`Generated: ${new Date().toLocaleDateString('en-US')}`, 220, 30);
-  const cols = ['Date','Vendor','Category','Rec.','Spender','Payment','Tax','Total','Notes'];
-  const colW = [22,48,36,12,26,24,18,20,61];
-  let y = 42, x = 14;
-  doc.setFillColor(240,240,244); doc.rect(14,y-5,269,8,'F');
-  doc.setFont('helvetica','bold'); doc.setFontSize(8);
-  cols.forEach((c,i) => { doc.text(c,x,y); x += colW[i]; });
-  doc.setFont('helvetica','normal');
-  data.forEach((e,idx) => {
-    y += 9; if (y > 185) { doc.addPage(); y = 20; } x = 14;
-    if (idx%2===0) { doc.setFillColor(249,248,246); doc.rect(14,y-5,269,8,'F'); }
-    [e.date,(e.vendor||'').substring(0,20),(e.category||'').substring(0,18),e.recurring?'↻':'',
-     e.spender||'—',e.payment||'—',`$${Number(e.tax||0).toFixed(2)}`,`$${Number(e.total||0).toFixed(2)}`,
-     (e.notes||'').substring(0,30)
-    ].forEach((v,i) => { doc.text(String(v),x,y); x += colW[i]; });
-  });
-  y += 12;
-  doc.setFont('helvetica','bold'); doc.setFillColor(26,26,46); doc.setTextColor(255,255,255);
-  doc.rect(14,y-5,269,9,'F');
-  doc.text('TOTAL',14,y);
-  const taxX = 14+colW.slice(0,6).reduce((a,b)=>a+b,0);
-  doc.text(`$${totalTax.toFixed(2)}`,taxX,y);
-  doc.text(`$${total.toFixed(2)}`,taxX+colW[6],y);
-  doc.save(`SkyLane_Expenses_${year}.pdf`);
-  showToast('PDF downloaded.');
-};
-
-// ── Tax Summary PDF ───────────────────────────────────────────────────────────
-window.exportTaxSummary = () => {
-  const year = document.getElementById('year-filter').value;
-  const data = expenses.filter(e => e.date && e.date.startsWith(year));
-  if (!data.length) { showToast('No expenses to export.'); return; }
-
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF({ orientation:'portrait', unit:'mm', format:'a4' });
-  const total    = data.reduce((s,e) => s+(e.total||0), 0);
-  const totalTax = data.reduce((s,e) => s+(e.tax||0), 0);
-  const recurring = data.filter(e => e.recurring);
-  const oneTime   = data.filter(e => !e.recurring);
-
-  // Header
-  doc.setFillColor(26,26,46); doc.rect(0,0,210,28,'F');
-  doc.setTextColor(255,255,255);
-  doc.setFontSize(18); doc.setFont('helvetica','bold');
-  doc.text('SkyLane', 14, 12);
-  doc.setFontSize(11); doc.setFont('helvetica','normal');
-  doc.text('Business Expense Tax Summary', 14, 20);
-  doc.setFontSize(10);
-  doc.text(`Tax Year ${year}`, 160, 12);
-  doc.text(`Generated ${new Date().toLocaleDateString('en-US')}`, 148, 20);
-
-  // Summary box
-  doc.setTextColor(50,50,50);
-  doc.setFillColor(249,248,246); doc.rect(14,34,182,32,'F');
-  doc.setDrawColor(220,220,216); doc.rect(14,34,182,32,'S');
-  doc.setFont('helvetica','bold'); doc.setFontSize(9);
-  doc.text('TOTAL BUSINESS EXPENSES', 20, 43);
-  doc.text('TOTAL TAX PAID', 80, 43);
-  doc.text('TOTAL RECEIPTS', 140, 43);
-  doc.setFontSize(16);
-  doc.text(`$${total.toFixed(2)}`, 20, 56);
-  doc.text(`$${totalTax.toFixed(2)}`, 80, 56);
-  doc.text(String(data.length), 140, 56);
-
-  // By category
-  let y = 78;
-  doc.setFontSize(11); doc.setFont('helvetica','bold'); doc.setTextColor(26,26,46);
-  doc.text('Expenses by category', 14, y); y += 8;
-
-  CATS.forEach(cat => {
-    const catExp = data.filter(e => e.category === cat);
-    if (!catExp.length) return;
-    const catTotal = catExp.reduce((s,e) => s+(e.total||0), 0);
-    if (y > 260) { doc.addPage(); y = 20; }
-    doc.setFillColor(245,245,243); doc.rect(14,y-4,182,7,'F');
-    doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(50,50,50);
-    doc.text(cat, 16, y);
-    doc.text(`$${catTotal.toFixed(2)}`, 160, y);
-    doc.text(`${catExp.length} expense${catExp.length!==1?'s':''}`, 185, y, {align:'right'});
-    y += 9;
-    doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(100,100,100);
-    catExp.forEach(e => {
-      if (y > 270) { doc.addPage(); y = 20; }
-      doc.text(`${e.date}  ${(e.vendor||'').substring(0,30)}${e.recurring?' (recurring)':''}`, 20, y);
-      doc.text(`$${Number(e.total||0).toFixed(2)}`, 185, y, {align:'right'});
-      y += 6;
-    });
-    y += 3;
-  });
-
-  // Recurring summary
-  if (recurring.length) {
-    if (y > 240) { doc.addPage(); y = 20; }
-    y += 4;
-    doc.setFontSize(11); doc.setFont('helvetica','bold'); doc.setTextColor(26,26,46);
-    doc.text('Recurring expenses', 14, y); y += 8;
-    doc.setFontSize(8); doc.setFont('helvetica','normal'); doc.setTextColor(100,100,100);
-    doc.text('These expenses repeat monthly and should be reviewed for ongoing deductibility.', 14, y); y += 8;
-    recurring.forEach(e => {
-      if (y > 270) { doc.addPage(); y = 20; }
-      doc.setTextColor(80,80,80);
-      doc.text(`${e.vendor||'—'}  ·  ${e.category}  ·  ${e.date}`, 20, y);
-      doc.text(`$${Number(e.total||0).toFixed(2)}/mo`, 185, y, {align:'right'});
-      y += 6;
-    });
-    y += 4;
-    doc.setFont('helvetica','bold');
-    doc.text(`Recurring annual total: $${recurring.reduce((s,e)=>s+(e.total||0),0).toFixed(2)}`, 20, y);
-  }
-
-  // Footer
-  const pageCount = doc.getNumberOfPages();
-  for (let i = 1; i <= pageCount; i++) {
-    doc.setPage(i);
-    doc.setFontSize(8); doc.setFont('helvetica','normal'); doc.setTextColor(180,180,180);
-    doc.text(`SkyLane Business Hub  ·  Tax Year ${year}  ·  Page ${i} of ${pageCount}`, 105, 290, {align:'center'});
-  }
-
-  // Append receipt images page
-  const withImages = data.filter(e => e.image_data);
-  if (withImages.length) {
-    doc.addPage();
-    doc.setFontSize(13); doc.setFont('helvetica','bold');
-    doc.setTextColor(26,26,46);
-    doc.text('Receipt images', 14, 20);
-    doc.setFontSize(8); doc.setFont('helvetica','normal'); doc.setTextColor(150,150,150);
-    doc.text(`${withImages.length} receipt${withImages.length!==1?'s':''} attached`, 14, 28);
-    let iy = 36, ix = 14, imgW = 85, imgH = 60, col = 0;
-    for (const e of withImages) {
-      if (iy + imgH > 270) { doc.addPage(); iy = 20; }
-      try {
-        doc.addImage(e.image_data, 'JPEG', ix + col * (imgW + 10), iy, imgW, imgH);
-        doc.setFontSize(7); doc.setTextColor(120,120,120);
-        doc.text(`${e.vendor||''} · ${e.date||''} · $${Number(e.total||0).toFixed(2)}`, ix + col * (imgW + 10), iy + imgH + 4);
-      } catch(_) {}
-      col++;
-      if (col >= 2) { col = 0; iy += imgH + 14; }
-    }
-  }
-
-  doc.save(`SkyLane_TaxSummary_${year}.pdf`);
-  showToast('Tax summary downloaded.');
-};
-
-// ── Lightbox ──────────────────────────────────────────────────────────────────
 window.openLightbox = id => {
   const e = expenses.find(x => x.id === id);
   if (!e || !e.image_data) return;
   document.getElementById('lightbox-img').src = e.image_data;
   document.getElementById('lightbox').classList.add('open');
 };
-window.closeLightbox = ()  => document.getElementById('lightbox').classList.remove('open');
+window.closeLightbox = () => document.getElementById('lightbox').classList.remove('open');
 
-// ── Toast ─────────────────────────────────────────────────────────────────────
 window.showToast = msg => {
   const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('show');
   setTimeout(() => t.classList.remove('show'), 2800);
 };
 
-// ── Invoice tag state ────────────────────────────────────────────────────────
-
-// ── Expense detail / edit panel ───────────────────────────────────────────────
 let detailExpenseId = null;
 let dInvTags = [];
 
@@ -1278,14 +1056,12 @@ window.openDetailPanel = (id) => {
   document.getElementById('d-recurring').checked = !!e.recurring;
   dInvTags = [...(e.invoice_tags||[])];
   renderInvTags('d');
-  // Receipt image
   const imgWrap = document.getElementById('detail-img-wrap');
   if (e.image_data) {
     imgWrap.innerHTML = `<img class="detail-receipt" src="${e.image_data}" onclick="openLightbox('${e.id}')" alt="receipt"/>`;
   } else {
     imgWrap.innerHTML = '<div class="detail-receipt-empty">no receipt image</div>';
   }
-  // Line items
   const liWrap = document.getElementById('detail-line-items-wrap');
   const items = e.line_items||[];
   if (items.length) {
@@ -1294,9 +1070,7 @@ window.openDetailPanel = (id) => {
         <span class="detail-li-desc">${li.description||''}</span>
         <span class="detail-li-amt">$${Number(li.amount||0).toFixed(2)}</span>
       </div>`).join('');
-  } else {
-    liWrap.innerHTML = '';
-  }
+  } else { liWrap.innerHTML = ''; }
   document.getElementById('detail-overlay').classList.add('open');
 };
 
@@ -1331,11 +1105,8 @@ window.saveDetailPanel = async () => {
 window.deleteFromDetail = async () => {
   if (!detailExpenseId) return;
   if (!confirm('Delete this expense permanently?')) return;
-  try {
-    await deleteDoc(doc(db, 'expenses', detailExpenseId));
-    showToast('Expense deleted.');
-    closeDetailPanel();
-  } catch(err) { console.error(err); showToast('Error deleting.'); }
+  try { await deleteDoc(doc(db, 'expenses', detailExpenseId)); showToast('Expense deleted.'); closeDetailPanel(); }
+  catch(err) { console.error(err); showToast('Error deleting.'); }
 };
 
 let fInvTags = [];
@@ -1363,7 +1134,6 @@ window.removeInvTag = (prefix, i) => {
   renderInvTags(prefix);
 };
 
-// ── Tag invoice modal ─────────────────────────────────────────────────────────
 let tagModalExpenseId = null;
 let tagModalTags = [];
 
@@ -1395,11 +1165,8 @@ window.addTagFromModal = () => {
 
 window.saveTagModal = async () => {
   if (!tagModalExpenseId) return;
-  try {
-    await updateDoc(doc(db, 'expenses', tagModalExpenseId), { invoice_tags: tagModalTags });
-    showToast('Invoice tags saved.');
-    closeTagModal();
-  } catch(err) { console.error(err); showToast('Error saving tags.'); }
+  try { await updateDoc(doc(db, 'expenses', tagModalExpenseId), { invoice_tags: tagModalTags }); showToast('Invoice tags saved.'); closeTagModal(); }
+  catch(err) { console.error(err); showToast('Error saving tags.'); }
 };
 
 window.closeTagModal = () => {
@@ -1407,7 +1174,6 @@ window.closeTagModal = () => {
   tagModalExpenseId = null; tagModalTags = [];
 };
 
-// ── Export panel ──────────────────────────────────────────────────────────────
 let exportFormat = 'csv';
 
 window.openExportPanel = () => {
@@ -1436,17 +1202,11 @@ window.setPreset = (preset, btn) => {
   btn.classList.add('active');
   const yr = new Date().getFullYear();
   const map = {
-    thisyear: [yr+'-01-01', yr+'-12-31'],
-    lastyear: [(yr-1)+'-01-01', (yr-1)+'-12-31'],
-    q1: [yr+'-01-01', yr+'-03-31'],
-    q2: [yr+'-04-01', yr+'-06-30'],
-    q3: [yr+'-07-01', yr+'-09-30'],
-    q4: [yr+'-10-01', yr+'-12-31'],
+    thisyear: [yr+'-01-01', yr+'-12-31'], lastyear: [(yr-1)+'-01-01', (yr-1)+'-12-31'],
+    q1: [yr+'-01-01', yr+'-03-31'], q2: [yr+'-04-01', yr+'-06-30'],
+    q3: [yr+'-07-01', yr+'-09-30'], q4: [yr+'-10-01', yr+'-12-31'],
   };
-  if (map[preset]) {
-    document.getElementById('exp-from').value = map[preset][0];
-    document.getElementById('exp-to').value   = map[preset][1];
-  }
+  if (map[preset]) { document.getElementById('exp-from').value = map[preset][0]; document.getElementById('exp-to').value = map[preset][1]; }
 };
 
 function getExportData() {
@@ -1477,10 +1237,8 @@ function doExportCSV(data) {
   const headers = ['Date','Vendor','Category','Recurring','Invoice(s)','Spender','Payment','Tax','Total','Notes','Line Items'];
   const rows = data.map(e => [
     e.date, e.vendor, e.category, e.recurring?'Yes':'No',
-    (e.invoice_tags||[]).join('; '),
-    e.spender||'', e.payment||'',
-    Number(e.tax||0).toFixed(2), Number(e.total||0).toFixed(2),
-    e.notes||'',
+    (e.invoice_tags||[]).join('; '), e.spender||'', e.payment||'',
+    Number(e.tax||0).toFixed(2), Number(e.total||0).toFixed(2), e.notes||'',
     (e.line_items||[]).map(li=>li.description+' ($'+Number(li.amount||0).toFixed(2)+')').join('; ')
   ]);
   const csv = [headers,...rows].map(r=>r.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(',')).join('\n');
@@ -1553,7 +1311,6 @@ function doExportTax(data) {
   doc.setFontSize(16);
   doc.text('$'+total.toFixed(2),20,56); doc.text('$'+totalTax.toFixed(2),80,56); doc.text(String(data.length),140,56);
   let y = 78;
-  const CATS = ['Equipment & hardware','Software & subscriptions','Office supplies','Travel & transport','Meals & entertainment','Professional services','Other'];
   doc.setFontSize(11); doc.setFont('helvetica','bold'); doc.setTextColor(45,61,56);
   doc.text('expenses by category', 14, y); y+=8;
   CATS.forEach(cat => {
@@ -1604,7 +1361,6 @@ function doExportTax(data) {
   doc.save('skylane_tax_summary_'+from+'_'+to+'.pdf'); showToast('Tax summary downloaded.');
 }
 
-// ── Init ──────────────────────────────────────────────────────────────────────
 initYearFilter();
 startListener();
 </script>
