@@ -262,9 +262,10 @@
             <svg viewBox="0 0 40 40" fill="none"><rect x="6" y="4" width="28" height="34" rx="4" stroke="var(--accent)" stroke-width="2"/><path d="M13 14h14M13 20h10M13 26h8" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round"/><circle cx="30" cy="30" r="8" fill="#f9f8f6" stroke="var(--accent)" stroke-width="1.5"/><path d="M30 26v8M26 30h8" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round"/></svg>
           </div>
           <div class="upload-title">Upload a receipt</div>
-          <div class="upload-hint">Click to browse or drag and drop — JPG, PNG, PDF</div>
+          <div class="upload-hint">Select up to 3 images — 1 overview + up to 2 zoomed detail shots for large receipts</div>
         </div>
-        <input type="file" id="file-input" accept="image/*,application/pdf" onchange="handleFile(event)"/>
+        <input type="file" id="file-input" accept="image/*" multiple onchange="handleFile(event)"/>
+        <div id="upload-preview" style="display:none;margin-top:1rem;"></div>
       </div>
 
       <!-- Manual entry form -->
@@ -631,50 +632,179 @@ window.switchUploadMode = (mode, btn) => {
 
 window.handleDragOver = e => { e.preventDefault(); document.getElementById('upload-zone').classList.add('dragover'); };
 window.handleDragLeave = () => document.getElementById('upload-zone').classList.remove('dragover');
-window.handleDrop = e => { e.preventDefault(); document.getElementById('upload-zone').classList.remove('dragover'); const f = e.dataTransfer.files[0]; if (f) processFile(f); };
-window.handleFile = e => { const f = e.target.files[0]; if (f) processFile(f); };
+window.handleDrop = e => {
+  e.preventDefault();
+  document.getElementById('upload-zone').classList.remove('dragover');
+  const files = [...e.dataTransfer.files].filter(f => f.type.startsWith('image/')).slice(0, 3);
+  if (files.length) processFiles(files);
+};
+window.handleFile = e => {
+  const files = [...e.target.files].filter(f => f.type.startsWith('image/')).slice(0, 3);
+  if (files.length) processFiles(files);
+};
 
-function processFile(file) {
-  const reader = new FileReader();
-  reader.onload = e => {
-    const img = new Image();
-    img.onload = () => {
-      const MAX = 1600;
-      let w = img.width, h = img.height;
-      if (w > MAX || h > MAX) {
-        if (w > h) { h = Math.round(h * MAX / w); w = MAX; }
-        else { w = Math.round(w * MAX / h); h = MAX; }
-      }
-      const canvas = document.createElement('canvas');
-      canvas.width = w; canvas.height = h;
-      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-      const compressed = canvas.toDataURL('image/jpeg', 0.85);
-      currentImageDataURL = compressed;
-      currentImageBase64 = compressed.split(',')[1];
-      showPanel('scanning-panel');
-      scanReceiptWithAI(currentImageBase64, 'image/jpeg');
+// ── Compress a single File to a dataURL ──────────────────────────────────────
+function compressImage(file, maxPx, quality) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = ev => {
+      const img = new Image();
+      img.onload = () => {
+        let w = img.width, h = img.height;
+        if (w > maxPx || h > maxPx) {
+          if (w > h) { h = Math.round(h * maxPx / w); w = maxPx; }
+          else { w = Math.round(w * maxPx / h); h = maxPx; }
+        }
+        const c = document.createElement('canvas');
+        c.width = w; c.height = h;
+        c.getContext('2d').drawImage(img, 0, 0, w, h);
+        resolve(c.toDataURL('image/jpeg', quality));
+      };
+      img.onerror = reject;
+      img.src = ev.target.result;
     };
-    img.src = e.target.result;
-  };
-  reader.readAsDataURL(file);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
 }
 
-// ── AI scanning — UPDATED PROMPT ─────────────────────────────────────────────
-async function scanReceiptWithAI(b64, mime) {
+// ── Stitch array of dataURLs vertically into one tall canvas ─────────────────
+async function stitchImages(dataURLs) {
+  const imgs = await Promise.all(dataURLs.map(src => new Promise((res, rej) => {
+    const img = new Image(); img.onload = () => res(img); img.onerror = rej; img.src = src;
+  })));
+  const GAP = 12;
+  const W = Math.max(...imgs.map(i => i.width));
+  const H = imgs.reduce((s, i) => s + i.height, 0) + GAP * (imgs.length - 1);
+  const canvas = document.createElement('canvas');
+  canvas.width = W; canvas.height = H;
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, W, H);
+  let y = 0;
+  imgs.forEach((img, idx) => {
+    const x = Math.round((W - img.width) / 2);
+    ctx.drawImage(img, x, y);
+    y += img.height + (idx < imgs.length - 1 ? GAP : 0);
+  });
+  return canvas.toDataURL('image/jpeg', 0.82);
+}
+
+// ── Identify which image is the receipt header (has store name / logo) ────────
+// We do this by asking Claude to identify the top portion among the detail shots.
+// For speed we send small thumbnails only — not the full-res images.
+async function identifyHeaderImage(detailBase64s) {
+  if (detailBase64s.length === 1) return 0; // only one detail shot, it must be first
+  try {
+    const content = [
+      ...detailBase64s.map(b64 => ({ type:'image', source:{ type:'base64', media_type:'image/jpeg', data: b64 } })),
+      { type:'text', text:`You are looking at ${detailBase64s.length} photos of the same receipt, taken in sections. Which image number (1 or 2) shows the TOP of the receipt — i.e. the one containing the store name, logo, or header? Reply with ONLY the number 1 or 2.` }
+    ];
+    const res = await fetch(WORKER_URL, {
+      method: 'POST',
+      headers: { 'Content-Type':'application/json' },
+      body: JSON.stringify({ model:'claude-sonnet-4-6', max_tokens:10, messages:[{ role:'user', content }] })
+    });
+    if (!res.ok) return 0;
+    const data = await res.json();
+    const txt = (data.content||[]).map(c=>c.text||'').join('').trim();
+    return txt.startsWith('2') ? 1 : 0; // convert "1"/"2" to 0-based index
+  } catch(e) {
+    return 0; // default: assume first image is the top
+  }
+}
+
+// ── Main multi-image processor ────────────────────────────────────────────────
+async function processFiles(files) {
+  // Show preview strip immediately
+  const previewEl = document.getElementById('upload-preview');
+  previewEl.style.display = 'flex';
+  previewEl.style.gap = '8px';
+  previewEl.style.flexWrap = 'wrap';
+  previewEl.innerHTML = '<div style="font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:0.1em;color:var(--faint);width:100%;margin-bottom:4px;">Selected images</div>';
+
+  // Compress all images (1600px for detail shots, same as before)
+  const compressed = await Promise.all(files.map(f => compressImage(f, 1600, 0.85)));
+
+  // Show previews with role labels
+  const roleLabels = files.length === 1
+    ? ['Overview / detail']
+    : files.length === 2
+    ? ['Overview', 'Detail']
+    : ['Overview', 'Detail (top)', 'Detail (bottom)'];
+
+  compressed.forEach((dataURL, idx) => {
+    const wrap = document.createElement('div');
+    wrap.style.cssText = 'display:flex;flex-direction:column;align-items:center;gap:4px;';
+    wrap.innerHTML = `
+      <img src="${dataURL}" style="height:90px;width:auto;max-width:100px;object-fit:contain;border:1px solid var(--border);border-radius:4px;background:var(--bg);"/>
+      <span style="font-size:10px;color:var(--muted);text-align:center;">${roleLabels[idx]}</span>`;
+    previewEl.appendChild(wrap);
+  });
+
+  showPanel('scanning-panel');
+
+  // Separate overview (index 0) from detail shots (index 1+)
+  const overviewDataURL = compressed[0];
+  const detailDataURLs  = compressed.length > 1 ? compressed.slice(1) : compressed; // if only 1 image, use it for both
+
+  // For multi-shot: identify which detail image is the header, sort top→bottom
+  let orderedDetailURLs = detailDataURLs;
+  if (detailDataURLs.length > 1) {
+    const detailB64s = detailDataURLs.map(d => d.split(',')[1]);
+    // Make small thumbnails for header detection (400px, fast)
+    const thumbURLs = await Promise.all(
+      files.slice(1).map(f => compressImage(f, 400, 0.7))
+    );
+    const thumbB64s = thumbURLs.map(t => t.split(',')[1]);
+    const headerIdx = await identifyHeaderImage(thumbB64s);
+    if (headerIdx === 1) {
+      // Swap so header is first
+      orderedDetailURLs = [detailDataURLs[1], detailDataURLs[0]];
+    }
+  }
+
+  // Stitch stored image: overview first, then ordered detail shots
+  const allForStitch = compressed.length === 1
+    ? [overviewDataURL]
+    : [overviewDataURL, ...orderedDetailURLs];
+  const stitchedDataURL = await stitchImages(allForStitch);
+  currentImageDataURL = stitchedDataURL;
+
+  // Send detail shots to Claude for extraction
+  const detailB64s = orderedDetailURLs.map(d => d.split(',')[1]);
+  await scanReceiptWithAI(detailB64s);
+}
+
+// ── AI scanning — multi-image aware ──────────────────────────────────────────
+async function scanReceiptWithAI(detailB64s) {
   const labels = ['Scanning receipt with AI…','Extracting line items…','Identifying vendor & date…','Calculating totals…'];
   let i = 0;
   const el = document.getElementById('scan-label');
   const ticker = setInterval(() => { el.textContent = labels[i++ % labels.length]; }, 1800);
   try {
     const currentYear = new Date().getFullYear();
+    const isMulti = detailB64s.length > 1;
+
+    // Build image content blocks — detail shots only, already sorted top→bottom
+    const imageBlocks = detailB64s.map(b64 => ({
+      type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: b64 }
+    }));
+
+    const multiNote = isMulti
+      ? `You are looking at ${detailB64s.length} photos of the same receipt, provided in order from TOP to BOTTOM. They have already been sorted so image 1 is the top of the receipt (containing the store header) and image 2 is the bottom (containing totals). Treat them as one continuous receipt and extract all line items across both images.`
+      : `You are looking at a single receipt photo.`;
+
     const res = await fetch(WORKER_URL, {
       method: 'POST',
       headers: { 'Content-Type':'application/json' },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-6', max_tokens: 1000,
+        model: 'claude-sonnet-4-6', max_tokens: 1500,
         messages: [{ role:'user', content: [
-          { type:'image', source:{ type:'base64', media_type: mime, data: b64 } },
-          { type:'text', text:`You are a receipt scanner for a US small business. Extract data carefully using these rules:
+          ...imageBlocks,
+          { type:'text', text:`You are a receipt scanner for a US small business. ${multiNote}
+
+Extract data carefully using these rules:
 
 DATES: The current year is ${currentYear}. Receipt dates should be assumed to be from the current year unless clearly printed otherwise. Receipts often use 2-digit years (e.g. 05/21/26 means 2026-05-21). Read date digits exactly as printed — never substitute or assume a different year. Output all dates as YYYY-MM-DD.
 
@@ -854,6 +984,8 @@ window.cancelReview = () => resetForm();
 function resetForm() {
   showPanel(null);
   document.getElementById('file-input').value = '';
+  const previewEl = document.getElementById('upload-preview');
+  previewEl.style.display = 'none'; previewEl.innerHTML = '';
   ['f-vendor','f-date','f-total','f-tax','f-notes'].forEach(id => document.getElementById(id).value = '');
   ['f-payment','f-spender','f-category'].forEach(id => document.getElementById(id).value = '');
   document.getElementById('f-recurring').checked = false;
